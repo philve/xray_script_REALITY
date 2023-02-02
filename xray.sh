@@ -965,6 +965,16 @@ set_shadowsocks_withoutTLS() {
     fi
     cat >/usr/local/etc/xray/config.json <<-EOF
 {
+    "policy": {
+            "levels": {
+                "1": {
+                    "handshake": $handshake,
+                    "connIdle": $connIdle,
+                    "uplinkOnly": $uplinkOnly,
+                    "downlinkOnly": $downlinkOnly
+                }
+            }
+    },
     "inbounds": [
         {
             "listen": "$listen",
