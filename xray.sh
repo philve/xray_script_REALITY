@@ -46,6 +46,13 @@ done
 [[ -z $SYSTEM ]] && red "不支持当前VPS系统，请使用主流的操作系统" && exit 1
 [[ -z $(type -P curl) ]] && ${PACKAGE_UPDATE[int]} && ${PACKAGE_INSTALL[int]} curl
 
+# 生成随机的超时秒数以对抗 GFW 的主动探测
+
+handshake=$(((($RANDOM*6)/32768)+4)) #4-10
+connIdle=$(((($RANDOM*201)/32768)+300)) # 300-500
+uplinkOnly=$(((($RANDOM*9)/32768)+2)) # 2-10
+downlinkOnly=$(((($RANDOM*11)/32768)+5)) # 5-15
+
 set_VMess_withoutTLS() {
     echo ""
     read -p "请输入 VMess 监听端口(默认随机): " port
@@ -100,6 +107,16 @@ set_VMess_withoutTLS() {
             done
             cat >/usr/local/etc/xray/config.json <<-EOF
 {
+    "policy": {
+            "levels": {
+                "1": {
+                    "handshake": $handshake,
+                    "connIdle": $connIdle,
+                    "uplinkOnly": $uplinkOnly,
+                    "downlinkOnly": $downlinkOnly
+                }
+            }
+    },
   "inbounds": [
     {
       "port": $port,
@@ -251,6 +268,16 @@ raw="{
         [[ -z "$host" ]] && host="a.189.cn"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
+    "policy": {
+            "levels": {
+                "1": {
+                    "handshake": $handshake,
+                    "connIdle": $connIdle,
+                    "uplinkOnly": $uplinkOnly,
+                    "downlinkOnly": $downlinkOnly
+                }
+            }
+    },
   "inbounds": [
     {
       "port": $port,
@@ -1063,9 +1090,9 @@ install_official() {
     if [[ "$ownVersion" == "y" ]]; then
         read -p "请输入安装版本(不要以"v"开头): " xrayVersion
         [[ -z "xrayVersion" ]] && red "请输入有效版本号！" && exit 1
-        bash -c "$(curl -L -k https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --version ${xrayVersion}
+        bash -c "$(curl -L -k https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --version ${xrayVersion} -u root
     else
-        bash -c "$(curl -L -k https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+        bash -c "$(curl -L -k https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u root
     fi
 }
 
