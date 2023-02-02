@@ -36,3 +36,5 @@ xtls + fallback(ws)
 [网络跳跃(hijk)](https://github.com/hijkpw)
 
 [project X](https://xtls.github.io)
+
+[ChatGPT](https://chat.openai.com)
