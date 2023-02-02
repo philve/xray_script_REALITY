@@ -125,6 +125,7 @@ set_VMess_withoutTLS() {
         "clients": [
           {
             "id": "$uuid",
+            "level": 1,
             "alterId": 0
           }
         ]
@@ -286,6 +287,7 @@ raw="{
         "clients": [
           {
             "id": "$uuid",
+            "level": 1,
             "alterId": 0
           }
         ]
@@ -983,7 +985,7 @@ set_shadowsocks_withoutTLS() {
             "settings": {
                 "password": "$password",
                 "method": "$method",
-                "level": 0,
+                "level": 1,
                 "email": "love@xray.com",
                 "network": "tcp,udp"
             }
@@ -1035,6 +1037,321 @@ set_withoutTLS() {
         3) set_VLESS_withoutTLS ;;
         *) red "请输入正确的选项！" ;;
     esac
+}
+
+set_withXTLS() {
+    echo ""
+    yellow "请确保: "
+    yellow "1. 已安装 Xray"
+    yellow "2. 申请了自己的 TLS 证书"
+    yellow "3. 将使用系统的包管理器(重新)安装 nginx"
+    red "4. 原 nginx 和 Xray 配置将被删除！！！"
+    echo ""
+    read -p "输入任意内容继续，按 ctrl + c 退出" rubbish
+    echo ""
+    echo ""
+    echo ""
+    
+    read -p "请输入 VLESS 监听端口(默认443): " port
+    [[ -z "${port}" ]] && port=443
+    if [[ "${port:0:1}" == "0" ]]; then
+        red "端口不能以0开头"
+        port=443
+    fi
+    yellow "当前端口: $port"
+    echo ""
+
+    read -p "请输入回落网站端口(默认 80): " fallbackPort
+    [[ -z "${fallbackPort}" ]] && fallbackPort=80
+    if [[ "${fallbackPort:0:1}" == "0" ]]; then
+        red "端口不能以0开头"
+        fallbackPort=80
+    fi
+    yellow "当前端口: $fallbackPort"
+
+    echo ""
+    wsPort=$(shuf -i10000-65000 -n1)
+    wsPath=$(openssl rand -hex 6)
+    fallbackPort2=$(shuf -i10000-65000 -n1)
+
+    portUsed=$(lsof -i :$port)
+    fallbackPortUsed=$(lsof -i :$fallbackPort)
+    wsPortUsed=$(lsof -i :$fallbackPort)
+    fallbackPort2Used=$(lsof -i :$fallbackPort2)
+    yellow "当前需要用到的端口占用: "
+    yellow "$portUsed"
+    echo ""
+    yellow "$fallbackPortUsed"
+    echo ""
+    yellow "$wsPortUsed"
+    echo ""
+    yellow "$fallbackPort2Used"
+    echo ""
+    read -p "有占用请 ctrl + c 推出，无占用或强制执行请回车: " rubbish
+    echo ""
+
+    uuid=$(xray uuid)
+    [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1
+    yellow "当前uuid: $uuid"
+
+    yellow "流控: "
+    green "1. xtls-rprx-vision(推荐)"
+    yellow "2. xtls-rprx-direct"
+    red "3. xtls-rprx-origin(已过时)"
+    echo ""
+    read -p "请选择: " answer
+    case $answer in
+        1) flow="xtls-rprx-vision,none" && flow2="xtls-rprx-vision" && TLS="tls" ;;
+        2) flow="xtls-rprx-direct" && TLS="xtls" ;;
+        3) flow="xtls-rprx-origin" && TLS="xtls" ;;
+        *) red "已自动选择 xtls-rprx-vision!" && flow="xtls-rprx-vision,none" && flow2="xtls-rprx-vision" && TLS="tls" ;;
+    esac
+    yellow "当前流控: $flow"
+
+    echo ""
+    read -p "请输入你的域名: " domain
+    yellow "当前域名: $domain"
+    echo ""
+    read -p "请输入证书路径(不要以'~'开头！): " cert
+    if [[ ${cert:0:1} == "~" ]] || [ -z "$cert" ]; then
+        red "请输入证书路径 或 证书路径不能以 ~ 开头！" && exit 1
+    fi
+    yellow "当前证书路径: $cert"
+    echo ""
+    read -p "请输入密钥路径(不要以'~'开头！): " key
+    if [[ ${key:0:1} == "~" ]] || [ -z "$key" ]; then
+        red "请输入密钥路径 或 密钥路径不能以 ~ 开头！" && exit 1
+    fi
+    yellow "当前密钥路径: $key"
+
+    echo ""
+    read -p "请输入反代网站网址(必须为 https 网站，默认: https://www.bing.com): " forwardWeb
+    [ -z "$forwardWeb" ] && forwardWeb="https://www.bing.com"
+    yellow "当前反代网站: $forwardWeb"
+    echo ""
+
+    green "正在安装 nginx ......"
+    ${PACKAGE_UPDATE[int]}
+    ${PACKAGE_INSTALL[int]} nginx
+    echo ""
+    green "正在生成 nginx 配置"
+    cat >/etc/nginx/nginx.conf <<-EOF
+user root;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    gzip on;
+
+    server {
+        listen 0.0.0.0:$fallbackPort;
+        listen [::]:$fallbackPort;
+        listen 0.0.0.0:$fallbackPort2Used http2;
+        listen [::]:$fallbackPort2Used http2;
+        server_name $domain;
+
+        location / {
+            proxy_pass ${forwardWeb};
+            proxy_redirect off;
+            proxy_ssl_server_name on;
+            sub_filter_once off;
+            sub_filter "${forwardWeb}" \$server_name;
+            proxy_set_header Host "${forwardWeb}";
+            proxy_set_header Referer \$http_referer;
+            proxy_set_header X-Real-IP $\remote_addr;
+            proxy_set_header User-Agent \$http_user_agent;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header Accept-Encoding "";
+            proxy_set_header Accept-Language "zh-CN";
+        }
+
+        location /${wsPath} {
+            proxy_redirect off;
+			proxy_pass http://127.0.0.1:${wsPort};
+			roxy_http_version 1.1;
+			proxy_set_header Upgrade \$http_upgrade;
+			proxy_set_header Connection "upgrade";
+			proxy_set_header Host \$host;
+			proxy_set_header X-Real-IP \$remote_addr;
+			proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        }
+
+    }
+}
+EOF
+
+    systemctl enable nginx
+    systemctl stop nginx
+    systemctl start nginx
+
+    echo ""
+    green "正在配置 Xray"
+    cp $cert /usr/local/etc/xray/cert.crt
+    cp $key /usr/local/etc/xray/key.key
+    cat >/usr/local/etc/xray/config.json <<-EOF
+{
+    "policy": {
+        "levels": {
+            "1": {
+                "handshake": $handshake,
+                "connIdle": $connIdle,
+                "uplinkOnly": $uplinkOnly,
+                "downlinkOnly": $downlinkOnly
+            }
+        }
+    },
+    "inbounds": [
+        {
+            "port": $port,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "$uuid",
+                        "level": 1,
+                        "flow": "$flow"
+                    }
+                ],
+                "fallbacks": [
+                    {
+                        "alpn": "h2",
+                        "dest": $fallbackPort2Used
+                    },
+                    {
+                        "alpn": "http/1.1",
+                        "dest": $fallbackPort
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "tls",
+                "${TLS}Settings": {
+                    "certificates": [
+                        {
+                            "certificateFile": "/usr/local/etc/xray/cert.crt",
+                            "keyFile": "/usr/local/etc/xray/key.key"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "listen": "127.0.0.1",
+            "port": $wsPort,
+            "protocol": "vmess",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "$uuid",
+                        "level": 1,
+                        "alterId": 0
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "wsSettings": {
+                    "path": "/${wsPath}"
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom",
+            "tag": "direct"
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "block"
+        }
+    ]
+}
+EOF
+
+    systemctl enable xray
+    systemctl stop xray
+    systemctl start xray
+    ufw allow $port
+    ufw reload
+
+    ip=$(curl ip.sb)
+    xtlsLink="vless://${uuid}@${ip}:${port}?sni=${domain}&security=${TLS}&type=tcp&flow=${flow2}"
+    wsLink1="vmess://${uuid}@${ip}:${port}?sni=${domain}&security=${TLS}&type=ws&host=${domain}&path=${wsPath}"
+raw="{
+  \"v\":\"2\",
+  \"ps\":\"\",
+  \"add\":\"${ip}\",
+  \"port\":\"${port}\",
+  \"id\":\"${uuid}\",
+  \"aid\":\"0\",
+  \"net\":\"ws\",
+  \"path\":\"${wsPath}\",
+  \"host\":\"${domain}\",
+  \"tls\":\"${TLS}\",
+  \"sni\":\"${domain}\"
+}"
+    tmpLink=$(echo -n ${raw} | base64 -w 0)
+    wsLink2="vmess://$tmpLink"
+    tlsLink="vless://${uuid}@${ip}:${port}?sni=${domain}&security=tls&type=tcp"
+
+    yellow "节点一:"
+    yellow "协议: VLESS"
+    yellow "地址: $ip 或 $domain"
+    yellow "端口: $port"
+    yellow "底层传输方式: TCP"
+    yellow "传输层安全: $TLS"
+    yellow "流控: $flow2"
+    yellow "UUID: $uuid"
+    yellow "服务名称指示(sni): $domain"
+    echo ""
+    green "分享链接: $xtlsLink"
+
+    echo ""
+    echo ""
+    yellow "节点二:"
+    yellow "协议: VMess"
+    yellow "地址: $ip 或 $domain"
+    yellow "端口: $port"
+    yellow "底层传输方式: ws"
+    yellow "ws 路径: $wsPath"
+    yellow "ws host: $domain"
+    yellow "传输层安全: TLS"
+    yellow "UUID: $uuid"
+    yellow "额外ID: 0"
+    yellow "服务名称指示(sni): $domain"
+    echo ""
+    yellow "分享链接(DuckSoft): $wsLink1"
+    echo ""
+    green "分享链接(v2rayN): $wsLink2"
+
+    if [ "$flow2" == "xtls-rprx-vision" ]; then
+        yellow "节点三:"
+        yellow "协议: VLESS"
+        yellow "地址: $ip 或 $domain"
+        yellow "端口: $port"
+        yellow "传输层安全: TLS"
+        yellow "UUID: $uuid"
+        yellow "服务名称指示(sni): $domain"
+        echo ""
+        green "分享链接: $tlsLink"
+    fi
 }
 
 install_build() {
@@ -1108,7 +1425,7 @@ install_official() {
 
 update_system() {
     ${PACKAGE_UPDATE[int]}
-    ${PACKAGE_INSTALL[int]} curl wget tar openssl
+    ${PACKAGE_INSTALL[int]} curl wget tar openssl lsof
 }
 
 get_cert() {
@@ -1129,6 +1446,8 @@ install_go() {
         cpu=arm64
     elif [[ $bit = armv7 ]]; then
         cpu=arm64
+    elif [[ $bit = s390x ]]; then
+        cpu=s390x
     else 
         cpu=$bit
         red "可能不支持该型号( $cpu )的CPU!"
@@ -1159,12 +1478,19 @@ menu() {
     red "Xray一键安装/配置脚本"
     echo ""
     yellow "1. 通过官方脚本安装 Xray"
-    yellow "2. 编译安装 Xray (易失败)"
+    yellow "2. 编译安装 Xray"
     echo ""
     echo "------------------------------------"
     echo ""
     yellow "3. 配置 Xray: 无TLS的协议"
+    yellow "4. 配置 Xray: VLESS + xtls + web (推荐)"
     echo ""
+    echo "------------------------------------"
+    echo "11. 启动 Xray"
+    echo "12. 停止 Xray"
+    echo "13. 设置 Xray 开机自启动"
+    echo "14. 取消 Xray 开机自启动"
+    echo "15. 查看 Xray 运行状态"
     echo "------------------------------------"
     echo ""
     yellow "100. 更新系统和安装依赖"
@@ -1180,6 +1506,12 @@ menu() {
         1) install_official ;;
         2) install_build ;;
         3) set_withoutTLS ;;
+        4) set_withXTLS ;;
+        11) systemctl start xray ;;
+        12) systemctl stop xray ;;
+        13) systemctl enable xray ;;
+        14) systemctl disable xray ;;
+        15) systemctl status xray ;;
         100) update_system ;;
         101) get_cert ;;
         102) install_go ;;
