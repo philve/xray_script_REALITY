@@ -25,11 +25,11 @@ https://github.com/tdjnodj/xray_script/tree/old
 
 - 随机握手超时时间，抵御主动探测( VMess + ws / VMess + tcp + http / shadowsocks)
 
-# 功能预告
+# TODO
 
 xtls + fallback(ws)
 
-~~随机`Policy`，以缓解[Xray #1511](https://github.com/XTLS/Xray-core/issues/1511)中的主动探测。~~ 已完成
+~~随机`Policy`，以缓解[Xray #1511](https://github.com/XTLS/Xray-core/issues/1511)中的主动探测。~~ (已完成)
 
 # Thanks
 
