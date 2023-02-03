@@ -1159,8 +1159,8 @@ http {
     server {
         listen 0.0.0.0:$fallbackPort;
         listen [::]:$fallbackPort;
-        listen 0.0.0.0:$fallbackPort2Used http2;
-        listen [::]:$fallbackPort2Used http2;
+        listen 0.0.0.0:$fallbackPort2 http2;
+        listen [::]:$fallbackPort2 http2;
         server_name $domain;
 
         location / {
@@ -1181,13 +1181,13 @@ http {
 
         location /${wsPath} {
             proxy_redirect off;
-			proxy_pass http://127.0.0.1:${wsPort};
-			roxy_http_version 1.1;
-			proxy_set_header Upgrade \$http_upgrade;
-			proxy_set_header Connection "upgrade";
-			proxy_set_header Host \$host;
-			proxy_set_header X-Real-IP \$remote_addr;
-			proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_pass http://127.0.0.1:${wsPort};
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade \$http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         }
 
     }
@@ -1229,7 +1229,7 @@ EOF
                 "fallbacks": [
                     {
                         "alpn": "h2",
-                        "dest": $fallbackPort2Used
+                        "dest": $fallbackPort2
                     },
                     {
                         "alpn": "http/1.1",
