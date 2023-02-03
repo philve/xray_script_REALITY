@@ -13,7 +13,7 @@ https://github.com/tdjnodj/xray_script/tree/old
 
 - 模块化安装，方便管理。BBR、证书申请等专业活请使用专业脚本。
 
-- 随机握手超时时间，抵御主动探测( VMess + ws / VMess + tcp + http / shadowsocks)
+- 随机握手超时时间，抵御主动探测( VMess + ws / VMess + tcp + http / shadowsocks / VLESS + tcp + xtls)
 
 # TODO
 
