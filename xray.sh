@@ -1292,8 +1292,15 @@ EOF
     ufw reload
 
     ip=$(curl ip.sb)
-    xtlsLink="vless://${uuid}@${ip}:${port}?sni=${domain}&security=${TLS}&type=tcp&flow=${flow2}"
-    wsLink1="vmess://${uuid}@${ip}:${port}?sni=${domain}&security=${TLS}&type=ws&host=${domain}&path=${wsPath}"
+    ipv6=$(curl ip.sb -6)
+    if [ "$ip" == "$ipv6" ]; then
+        linkIP="[$ip]"
+    else
+        linkIP="$ip"
+    fi
+
+    xtlsLink="vless://${uuid}@${linkIP}:${port}?sni=${domain}&security=${TLS}&type=tcp&flow=${flow2}"
+    wsLink1="vmess://${uuid}@${linkIP}:${port}?sni=${domain}&security=${TLS}&type=ws&host=${domain}&path=${wsPath}"
 raw="{
   \"v\":\"2\",
   \"ps\":\"\",
@@ -1309,7 +1316,7 @@ raw="{
 }"
     tmpLink=$(echo -n ${raw} | base64 -w 0)
     wsLink2="vmess://$tmpLink"
-    tlsLink="vless://${uuid}@${ip}:${port}?sni=${domain}&security=tls&type=tcp"
+    tlsLink="vless://${uuid}@${linkIP}:${port}?sni=${domain}&security=tls&type=tcp"
 
     yellow "节点一:"
     yellow "协议: VLESS"
