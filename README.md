@@ -23,6 +23,8 @@ https://github.com/tdjnodj/xray_script/tree/old
 
 - [ ] VLESS/VMess/Trojan + gRPC + TLS
 
+- [ ] REALITY 支持 (?)
+
 # Thanks
 
 [网络跳跃(hijk)](https://github.com/hijkpw)
