@@ -1480,6 +1480,10 @@ EOF
     echo "如果错误，常见错误原因: 未删除旧的go"
 }
 
+unintstall_xray() {
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
+}
+
 menu() {
     clear
     red "Xray一键安装/配置脚本"
@@ -1490,7 +1494,7 @@ menu() {
     echo "------------------------------------"
     echo ""
     yellow "3. 配置 Xray: 无TLS的协议"
-    yellow "4. 配置 Xray: VLESS + xtls + web (推荐)"
+    green "4. 配置 Xray: VLESS + xtls + web (推荐)"
     echo ""
     echo "------------------------------------"
     echo "11. 启动 Xray"
@@ -1498,6 +1502,7 @@ menu() {
     echo "13. 设置 Xray 开机自启动"
     echo "14. 取消 Xray 开机自启动"
     echo "15. 查看 Xray 运行状态"
+    red "16. 卸载 Xray"
     echo "------------------------------------"
     echo ""
     yellow "100. 更新系统和安装依赖"
@@ -1519,6 +1524,7 @@ menu() {
         13) systemctl enable xray ;;
         14) systemctl disable xray ;;
         15) systemctl status xray ;;
+        16) unintstall_xray ;;
         100) update_system ;;
         101) get_cert ;;
         102) install_go ;;
