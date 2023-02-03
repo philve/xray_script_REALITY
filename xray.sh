@@ -1102,8 +1102,8 @@ set_withXTLS() {
     read -p "请选择: " answer
     case $answer in
         1) flow="xtls-rprx-vision,none" && flow2="xtls-rprx-vision" && TLS="tls" ;;
-        2) flow="xtls-rprx-direct" && TLS="xtls" ;;
-        3) flow="xtls-rprx-origin" && TLS="xtls" ;;
+        2) flow="xtls-rprx-direct" && flow2="xtls-rprx-direct" && TLS="xtls" ;;
+        3) flow="xtls-rprx-origin" && flow2="xtls-rprx-origin" && TLS="xtls" ;;
         *) red "已自动选择 xtls-rprx-vision!" && flow="xtls-rprx-vision,none" && flow2="xtls-rprx-vision" && TLS="tls" ;;
     esac
     yellow "当前流控: $flow"
