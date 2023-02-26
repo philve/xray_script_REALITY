@@ -65,6 +65,7 @@ set_VMess_withoutTLS() {
     echo ""
     uuid=$(xray uuid)
     [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1
+    getUUID
     yellow "当前uuid: $uuid"
     echo ""
     yellow "底层传输协议: "
@@ -599,6 +600,7 @@ set_VLESS_withoutTLS() {
     echo ""
     uuid=$(xray uuid)
     [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1
+    getUUID
     yellow "当前uuid: $uuid"
     echo ""
     yellow "底层传输协议: "
@@ -1092,6 +1094,7 @@ set_withXTLS() {
 
     uuid=$(xray uuid)
     [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1
+    getUUID
     yellow "当前uuid: $uuid"
 
     yellow "流控: "
@@ -1483,6 +1486,21 @@ EOF
 
 unintstall_xray() {
     bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
+}
+
+getUUID() {
+    echo ""
+    uuid_regex='^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$'
+    yellow "请输入你的 uuid，如果输入内容不合法将自动映射为一个uuid"
+    read -p " " answer
+    if [ -z "$answer" ]; then
+        uuid=$(uuidgen)
+    elif [ "$answer" == "${uuid_regex}" ]; then
+        uuid="${answer}"
+    else
+        red "uuid 不合法！已自动映射！"
+        uuid=$(xray uuid -i "$answer")
+    fi
 }
 
 menu() {
