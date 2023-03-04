@@ -1503,13 +1503,22 @@ getUUID() {
     fi
 }
 
-myHelp() {}
+myHelp() {
+    echo ""
+    yellow "bash ${PWD}/${0} [选项]"
+    echo ""
+    yellow "选项:"
+    echo ""
+    yellow "help         查看本帮助"
+    yellow "install      使用官方脚本 安装/更新 xray"
+    yellow "build        编译安装 xray"
+}
 
 menu() {
     clear
     red "Xray一键安装/配置脚本"
     echo ""
-    yellow "1. 通过官方脚本安装 Xray"
+    yellow "1. 通过官方脚本 安装/更新 Xray"
     yellow "2. 编译安装 Xray"
     echo ""
     echo "------------------------------------"
@@ -1558,4 +1567,7 @@ action=$1
 
 case "$action" in
     help) myHelp;;
+    install) install_official ;;
+    build) install_build ;;
+    *) red "不存在的选项！" && myHelp ;;
 esac
