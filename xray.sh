@@ -1098,16 +1098,20 @@ set_withXTLS() {
     yellow "当前uuid: $uuid"
 
     yellow "流控: "
-    green "1. xtls-rprx-vision(推荐)"
-    yellow "2. xtls-rprx-direct"
-    red "3. xtls-rprx-origin(已过时)"
+    green "1. xtls-rprx-vision,none(默认)"
+    yellow "2. xtls-rprx-vision(推荐)"
+    yellow "3. xtls-rprx-direct (Xray v1.7.5 后被移除)"
+    red "4 xtls-rprx-origin(不推荐)  (Xray v1.7.5 后被移除)"
+    yellow "5. none (不使用流控)"
     echo ""
     read -p "请选择: " answer
     case $answer in
         1) flow="xtls-rprx-vision,none" && flow2="xtls-rprx-vision" && TLS="tls" ;;
-        2) flow="xtls-rprx-direct" && flow2="xtls-rprx-direct" && TLS="xtls" ;;
-        3) flow="xtls-rprx-origin" && flow2="xtls-rprx-origin" && TLS="xtls" ;;
-        *) red "已自动选择 xtls-rprx-vision!" && flow="xtls-rprx-vision,none" && flow2="xtls-rprx-vision" && TLS="tls" ;;
+        2) flow="xtls-rprx-vision" && flow2="xtls-rprx-vision" && TLS="tls" ;;
+        3) flow="xtls-rprx-direct" && flow2="xtls-rprx-direct" && TLS="xtls" ;;
+        4) flow="xtls-rprx-origin" && flow2="xtls-rprx-origin" && TLS="xtls" ;;
+        5) flow="none" && flow2="none" && TLS="tls" ;;
+        *) red "已自动选择 xtls-rprx-vision,none!" && flow="xtls-rprx-vision,none" && flow2="xtls-rprx-vision" && TLS="tls" ;;
     esac
     yellow "当前流控: $flow"
 
