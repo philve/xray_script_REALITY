@@ -1423,6 +1423,7 @@ install_build() {
 }
 
 install_official() {
+    update_system
     echo ""
     read -p "是否手动指定 Xray 版本?不指定将安装最新稳定版(y/N): " ownVersion
     if [[ "$ownVersion" == "y" ]]; then
@@ -1512,6 +1513,7 @@ myHelp() {
     yellow "help         查看本帮助"
     yellow "install      使用官方脚本 安装/更新 xray"
     yellow "build        编译安装 xray"
+    yellow "cert         获取 tls 证书"
 }
 
 menu() {
@@ -1569,5 +1571,6 @@ case "$action" in
     help) myHelp;;
     install) install_official ;;
     build) install_build ;;
+    cert) get_cert ;;
     *) red "不存在的选项！" && myHelp ;;
 esac
