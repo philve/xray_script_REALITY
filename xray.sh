@@ -1478,7 +1478,7 @@ EOF
     yellow "检查当前golang版本: "
     go version
     yellow "为确保正常安装，请手动输入: "
-    red "export PATH=\$PATH:/usr/local/go/bin"
+    echo "echo 'export PATH=\$PATH:/usr/local/go/bin' >> /root/.bash_profile"
     red "source /root/.bash_profile"
     echo ""
     echo "如果错误，常见错误原因: 未删除旧的go"
@@ -1502,6 +1502,8 @@ getUUID() {
         uuid=$(xray uuid -i "$answer")
     fi
 }
+
+myHelp() {}
 
 menu() {
     clear
@@ -1555,6 +1557,5 @@ action=$1
 [[ -z $1 ]] && action=menu
 
 case "$action" in
-	menu | update | uninstall | start | restart | stop | showInfo | showLog) ${action} ;;
-	*) echo " 参数错误" && echo " 用法: $(basename $0) [menu|update|uninstall|start|restart|stop|showInfo|showLog]" ;;
+    help) myHelp;;
 esac
