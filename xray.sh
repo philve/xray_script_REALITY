@@ -1132,9 +1132,8 @@ set_withXTLS() {
     yellow "当前密钥路径: $key"
 
     echo ""
-    read -p "请输入反代网站网址(必须为 https 网站，默认: https://www.bing.com): " forwardWeb
-    [ -z "$forwardWeb" ] && forwardWeb="https://www.bing.com"
-    forwardWebHost=$(echo "${forwardWeb}" | cut -d'/' -f3)
+    read -p "请输入反代网站网址(必须为 https 网站，默认: www.bing.com): " forwardWeb
+    [ -z "$forwardWeb" ] && forwardWeb="www.bing.com"
     yellow "当前反代网站: $forwardWeb"
     echo ""
 
@@ -1172,12 +1171,12 @@ http {
         server_name $domain;
 
         location / {
-            proxy_pass ${forwardWeb};
+            proxy_pass https://${forwardWeb};
             proxy_redirect off;
             proxy_ssl_server_name on;
             sub_filter_once off;
-            sub_filter "${forwardWebHost}" \$server_name;
-            proxy_set_header Host "${forwardWebHost}";
+            sub_filter "${forwardWeb}" \$server_name;
+            proxy_set_header Host "${forwardWeb}";
             proxy_set_header Referer \$http_referer;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header User-Agent \$http_user_agent;
