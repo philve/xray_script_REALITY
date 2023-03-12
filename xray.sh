@@ -1671,9 +1671,7 @@ install_go() {
     sleep 3
     export PATH=\$PATH:/usr/local/go/bin
     rm go*.tar.gz
-    cat >>/root/.bash_profile <<-EOF
-export PATH=\$PATH:/usr/local/go/bin
-EOF
+    echo 'export PATH=\$PATH:/usr/local/go/bin' >> /root/.bash_profile
     source /root/.bash_profile
     yellow "检查当前golang版本: "
     go version
