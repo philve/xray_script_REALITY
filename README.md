@@ -24,6 +24,10 @@ https://github.com/tdjnodj/xray_script/tree/old
 
 - [ ] REALITY 支持
 
+# 答疑
+
+见 [wiki](https://github.com/tdjnodj/xray_script/wiki)
+
 # Thanks
 
 [网络跳跃(hijk)](https://github.com/hijkpw)
