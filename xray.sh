@@ -1686,6 +1686,10 @@ unintstall_xray() {
     bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ remove --purge
 }
 
+updateGEO() {
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install-geodata
+}
+
 getUUID() {
     echo ""
     uuid_regex='^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$'
@@ -1733,6 +1737,7 @@ menu() {
     echo " 14. 取消 Xray 开机自启动"
     echo " 15. 查看 Xray 运行状态"
     red " 16. 卸载 Xray"
+    echo " 17. 更新 geo 资源文件"
     echo " ------------------------------------"
     echo ""
     yellow " 100. 更新系统和安装依赖"
@@ -1756,6 +1761,7 @@ menu() {
         14) systemctl disable xray ;;
         15) systemctl status xray ;;
         16) unintstall_xray ;;
+        17) updateGEO ;;
         100) update_system ;;
         101) get_cert ;;
         102) install_go ;;
