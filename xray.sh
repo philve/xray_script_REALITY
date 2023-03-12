@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# 打印彩色文字
 red() {
 	echo -e "\033[31m\033[01m$1\033[0m"
 }
@@ -12,8 +13,10 @@ yellow() {
 	echo -e "\033[33m\033[01m$1\033[0m"
 }
 
+# 检测 root 权限
 [[ $EUID -ne 0 ]] && red "请在root用户下运行脚本" && exit 1
 
+# 系统相关
 CMD=(
 	"$(grep -i pretty_name /etc/os-release 2>/dev/null | cut -d \" -f2)"
 	"$(hostnamectl 2>/dev/null | grep -i system | cut -d : -f2)"
@@ -23,12 +26,14 @@ CMD=(
 	"$(grep . /etc/issue 2>/dev/null | cut -d \\ -f1 | sed '/^[ ]*$/d')"
 )
 
+# 偷来的遗留
 RED="\033[31m"
 GREEN="\033[32m"
 YELLOW="\033[33m"
 BLUE="\033[36m"
 PLAIN="\033[0m"
 
+# 系统包管理器相关
 REGEX=("debian" "ubuntu" "centos|red hat|kernel|oracle linux|alma|rocky" "'amazon linux'")
 RELEASE=("Debian" "Ubuntu" "CentOS" "CentOS")
 PACKAGE_UPDATE=("apt-get update" "apt-get update" "yum -y update" "yum -y update")
@@ -59,12 +64,12 @@ set_VMess_withoutTLS() {
     [[ -z "${port}" ]] && port=$(shuf -i200-65000 -n1)
     if [[ "${port:0:1}" == "0" ]]; then
         red "端口不能以0开头"
-        port=$(shuf -i200-65000 -n1)
+        port=$(shuf -i200-65000 -n1) #随机生成端口
     fi
     yellow "当前端口: $port"
     echo ""
-    uuid=$(xray uuid)
-    [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1
+    uuid=$(xray uuid) # 直接调用 Xray 的 uuid 指令以检测 是否安装 Xray
+    [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1 # 其实是历史遗留，顺便做了个功能
     getUUID
     yellow "当前uuid: $uuid"
     echo ""
@@ -171,6 +176,7 @@ EOF
         yellow "伪装域名: $host"
         yellow "路径: $path"
         echo ""
+# 来自 网络跳跃
 raw="{
   \"v\":\"2\",
   \"ps\":\"\",
@@ -917,6 +923,7 @@ EOF
     ufw reload
 }
 
+# 偷懒了，毕竟 shadowsocks 原版没有 udp over tcp
 set_shadowsocks_withoutTLS() {
     echo ""
     read -p "请输入 shadowsocks 监听端口(默认随机): " port
@@ -1140,6 +1147,10 @@ set_withXTLS() {
     yellow "当前反代网站: $forwardWeb"
     echo ""
 
+# 配置详解
+# http/1.1 就回落到 80 端口，h2 回落到高位端口。毕竟浏览器不会使用 h2c。
+# 反代网站对新手友好。
+
     green "正在安装 nginx ......"
     ${PACKAGE_UPDATE[int]}
     ${PACKAGE_INSTALL[int]} nginx
@@ -1207,6 +1218,9 @@ EOF
     systemctl enable nginx
     systemctl stop nginx
     systemctl start nginx
+
+# 默认用户等级似乎是 0,但我整篇都搞成了 1。
+# 将错就错吧，希望用户在浏览配置时能知道。
 
     echo ""
     green "正在配置 Xray"
@@ -1395,6 +1409,7 @@ set_REALITY_steal() {
     yellow " 当前目标端口: $port"
     echo ""
     red " 开始测试: "
+# 目前没有找到能读取 curl 结果并判断是否成功的方法，只能由用户自行判断
     curl --http2 --tlsv1.3 https://${forwardSite}:${forwardPort}
     yellow " 请确保没有错误，然后按 y 继续"
     read -p " (Y/n) " rubbish
@@ -1610,6 +1625,7 @@ install_official() {
     echo ""
     read -p "是否手动指定 Xray 版本?不指定将安装最新稳定版(y/N): " ownVersion
     if [[ "$ownVersion" == "y" ]]; then
+        # 也许根本不需要读取？毕竟不给版本号，官方脚本也会报错
         read -p "请输入安装版本(不要以"v"开头): " xrayVersion
         [[ -z "xrayVersion" ]] && red "请输入有效版本号！" && exit 1
         bash -c "$(curl -L -k https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --version ${xrayVersion} -u root
