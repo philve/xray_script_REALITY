@@ -1766,7 +1766,7 @@ menu() {
     echo ""
     yellow " 3. 配置 Xray: 无TLS的协议"
     green " 4. 配置 Xray: VLESS + xtls + web (推荐)"
-    green " 5. 配置 Xray: 用 REALITY \"借用\" 别人的证书: VLESS + tcp + xtls / VLESS + h2 + tls / VLESS + gRPC + TLS 共存！"
+    green " 5. 配置 Xray: 用 REALITY \"借用\" 别人的证书: VLESS + tcp + xtls / VLESS + h2 + tls 共存！"
     echo ""
     echo " ------------------------------------"
     echo " 11. 启动 Xray"
