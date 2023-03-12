@@ -1435,9 +1435,13 @@ set_REALITY_steal() {
         fi
     fi
     echo ""
+    h2Port=$(shuf -i10000-65000 -n1)
+    grpcPort=$(shuf -i10000-65000 -n1)
     red " 检测所需端口占用情况: "
     lsof -i:$port
     lsof -i:$DokodemoDoorPort
+    lsof -i:$h2Port
+    lsof -i:$grpcPort
     yellow " 如有占用，请使用 kill [pid] 来解除占用！"
     read -p "是否继续(Y/n)?" answer
     if [ "$answer" == "n" ];then
@@ -1492,7 +1496,12 @@ set_REALITY_steal() {
                         "flow": "$flow"
                     }
                 ],
-                "decryption": "none"
+                "decryption": "none",
+                "fallbacks": [
+                    {
+                        "dest": $h2Port
+                    }
+                ]
             },
             "streamSettings": {
                 "network": "tcp",
@@ -1512,7 +1521,52 @@ set_REALITY_steal() {
             }
         },
         {
-            "port": $DokodemoDoorPort,
+            "listen": "127.0.0.1",
+            "port": $h2Port,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "$uuid"
+                    }
+                ],
+                "decryption": "none",
+                "fallbacks": [
+                    {
+                        "dest": $grpcPort
+                    }
+                ]
+            },
+            "streamSettings": {
+                "security": "none",
+                "network": "h2",
+                "httpSettings": {
+                    "path": "/"
+                }
+            }
+        },
+        {
+            "listen": "127.0.0.1",
+            "port": $grpcPort,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "$uuid"
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "security": "none",
+                "network": "grpc",
+                "grpcSettings": {
+                    "serviceName": ""
+                }
+            }
+        },
+        {
+            "port": "$DokodemoDoorPort",
             "protocol": "Dokodemo-Door",
             "settings": {
                 "network": "tcp",
@@ -1547,12 +1601,50 @@ EOF
         linkIP="$ip"
     fi
     yellow " 服务器信息: "
+    echo ""
+    red " 节点一: "
     green " 协议: VLESS"
     green " 服务器地址: $linkIP"
     green " 端口: $port"
     green " uuid: $uuid"
     green " 流控: $flow"
     green " 传输方式: tcp"
+    green " 传输层安全: REALITY"
+    green " 浏览器指纹: 任选，推荐 ios"
+    green " serverName / 服务器名称指示 /sni: $forwardSiteSNI"
+    green " publicKey / 公钥: $PublicKey"
+    green " spiderX: 自行访问目标网站，找个靠谱的路径，不懂就填 \"/\" "
+    green " shortId: 不懂不填"
+    echo ""
+    green " 分享链接： 暂无标准"
+    echo ""
+    echo ""
+    red " 节点二:"
+    green " 协议: VLESS"
+    green " 服务器地址: $linkIP"
+    green " 端口: $port"
+    green " uuid: $uuid"
+    green " 流控: none"
+    green " 传输方式: HTTP/2"
+    green " 路径: /"
+    green " 传输层安全: REALITY"
+    green " 浏览器指纹: 任选，推荐 ios"
+    green " serverName / 服务器名称指示 /sni: $forwardSiteSNI"
+    green " publicKey / 公钥: $PublicKey"
+    green " spiderX: 自行访问目标网站，找个靠谱的路径，不懂就填 \"/\" "
+    green " shortId: 不懂不填"
+    echo ""
+    green " 分享链接： 暂无标准"
+    echo ""
+    echo ""
+    red " 节点三:"
+    green " 协议: VLESS"
+    green " 服务器地址: $linkIP"
+    green " 端口: $port"
+    green " uuid: $uuid"
+    green " 流控: none"
+    green " 传输方式: gRPC"
+    green " serverName: 无"
     green " 传输层安全: REALITY"
     green " 浏览器指纹: 任选，推荐 ios"
     green " serverName / 服务器名称指示 /sni: $forwardSiteSNI"
@@ -1728,7 +1820,7 @@ menu() {
     echo ""
     yellow " 3. 配置 Xray: 无TLS的协议"
     green " 4. 配置 Xray: VLESS + xtls + web (推荐)"
-    green " 5. 配置 Xray: 用 REALITY \"借用\" 别人的证书"
+    green " 5. 配置 Xray: 用 REALITY \"借用\" 别人的证书: VLESS + tcp + xtls / VLESS + h2 + tls / VLESS + gRPC + TLS 共存！"
     echo ""
     echo " ------------------------------------"
     echo " 11. 启动 Xray"
