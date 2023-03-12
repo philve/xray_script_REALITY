@@ -1371,6 +1371,183 @@ raw="{
     fi
 }
 
+set_REALITY_steal() {
+    echo ""
+    yellow " 请确保: "
+    yellow " 1. 会使用 REALITY 客户端，不会用请离开"
+    yellow " 2. 已用脚本的 1/2 选项 安装 Xray"
+    echo ""
+    read -p "输入任意内容继续，按 ctrl + c 退出" rubbish
+    echo ""
+    yellow " 请输入借用网站/ip，默认 dl.google.com: "
+    read -p "" forwardSite
+    [ -z "$forwardSite" ] && forwardSite="dl.google.com"
+    yellow " 当前借用网站: $forwardSite"
+    echo ""
+    yellow " 请输入借用网站的 sni(默认与借用网站相同): "
+    read -p "" forwardSiteSNI
+    [ -z "$forwardSiteSNI" ] && forwardSiteSNI=$forwardSite
+    yellow "当前借用网站的 sni: $forwardSiteSNI"
+    echo ""
+    yellow " 请输入目标网站端口(默认 443): "
+    read -p "" forwardPort
+    [ -z "$forwardPort" ] && forwardPort=443
+    yellow " 当前目标端口: $port"
+    echo ""
+    red " 开始测试: "
+    curl --http2 --tlsv1.3 https://${forwardSite}:${forwardPort}
+    yellow " 请确保没有错误，然后按 y 继续"
+    read -p " (Y/n) " rubbish
+    if [ "$rubbish" != "Y" ] || [ "$rubbish" != "y" ]; then
+        exit 0
+    fi
+    echo ""
+    yellow " 请输入 Xray 监听端口(默认 443): "
+    read -p "" port
+    [ -z "$port" ] && port=443
+    yellow " 当前 Xray 监听端口: $port"
+    if [ "$port" == "443" ] && [ "$forwardPort" == "443" ]; then
+        echo ""
+        green " 当前 80 端口占用: "
+        lsof -i:80
+        echo ""
+        yellow " 是否转发 80 端口?"
+        read -p " (Y/n)" answer
+        if [ "$answer" == "n" ] || [ "$answer" == "N" ]; then
+            "DokodemoDoorPort"=$(shuf -i10000-65000 -n1)
+        else
+            "DokodemoDoorPort"=80
+        fi
+    fi
+    echo ""
+    red " 检测所需端口占用情况: "
+    lsof -i:$port
+    lsof -i:$DokodemoDoorPort
+    yellow " 如有占用，请使用 kill [pid] 来解除占用！"
+    read -p "是否继续(Y/n)?" answer
+    if [ "$answer" == "n" ];then
+        exit 0
+    fi
+    echo ""
+    getUUID
+    echo ""
+    yellow " 当前 uuid: $uuid"
+    echo ""
+    tmpKey=$(xray x25519)
+    tmpPrivateKey=$(echo "$tmpKey" | grep Private | cut -d " " -f 3)
+    tmpPublickKey=$(echo "$tmpKey" |  grep Public | cut -d " " -f 3)
+    yellow " 请输入 REALITY 的公钥和私钥，不填将随机生成的！"
+    read -p " 私钥(服务端): " answer
+    if [ -z "$answer" ]; then
+        red " 已随机生成密钥对！"
+        PrivateKey="$tmpPrivateKey"
+        PublicKey="$tmpPublickKey"
+    else
+        PrivateKey=$answer
+        read -p " 公钥(客户端): " PublicKey
+    fi
+    echo ""
+    yellow " 当前私钥: $PrivateKey"
+    yellow " 当前公钥: $PubliccKey"
+    echo ""
+    yellow " 流控: "
+    green " 1. xtls-rprx-vision (默认)"
+    yellow "2. none (不使用流控)"
+    echo ""
+    read -p " 请选择: " answer
+    case $answer in
+        1) flow="xtls-rprx-vision" ;;
+        2) flow="none" ;;
+        *) red "已自动选择 xtls-rprx-vision!" && flow="xtls-rprx-vision" ;;
+    esac
+    yellow " 当前流控: $flow"
+    echo ""
+    echo ""
+    red " 开始配置 Xray!"
+    cat >/usr/local/etc/xray/config.json <<-EOF
+{
+    "inbounds": [
+        {
+            "port": $port,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "$uuid",
+                        "flow": "$flow"
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "reality",
+                "realitySettings": {
+                    "show": false,
+                    "dest": "${forwardSite}:${forwardPort}",
+                    "xver": 0,
+                    "serverNames": [
+                        "$forwardSiteSNI"
+                    ],
+                    "privateKey": "$PrivateKey",
+                    "shortIds": [
+                        ""
+                    ]
+                }
+            }
+        },
+        {
+            "port": $DokodemoDoorPort,
+            "protocol": "Dokodemo-Door",
+            "settings": {
+                "network": "tcp",
+                "address": "$forwardSite",
+                "port": 80
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        },
+        {
+            "protocol": "Blackhole"
+        }
+    ]
+}
+EOF
+
+    echo ""
+    systemctl restart xray
+    ufw allow $port
+    if [ "$DokodemoDoorPort" == "80" ]; then
+        ufw allow 80
+    fi
+    echo ""
+    ip=$(curl ip.sb)
+    ipv6=$(curl ip.sb -6)
+    if [ "$ip" == "$ipv6" ]; then
+        linkIP="[$ip]"
+    else
+        linkIP="$ip"
+    fi
+    yellow " 服务器信息: "
+    green " 协议: VLESS"
+    green " 服务器地址: $linkIP"
+    green " 端口: $port"
+    green " uuid: $uuid"
+    green " 流控: $flow"
+    green " 传输方式: tcp"
+    green " 传输层安全: REALITY"
+    green " 浏览器指纹: 任选，推荐 ios"
+    green " serverName / 服务器名称指示 /sni: $forwardSiteSNI"
+    green " publicKey / 公钥: $PublicKey"
+    green " spiderX: 自行访问目标网站，找个靠谱的路径，不懂就填 \"/\" "
+    green " shortId: 不懂不填"
+    echo ""
+    green " 分享链接： 暂无标准"
+}
+
 install_build() {
     echo ""
     yellow "请确保: "
@@ -1524,32 +1701,33 @@ myHelp() {
 
 menu() {
     clear
-    red "Xray一键安装/配置脚本"
+    red " Xray一键安装/配置脚本"
     echo ""
-    yellow "1. 通过官方脚本 安装/更新 Xray"
-    yellow "2. 编译安装 Xray"
+    yellow " 1. 通过官方脚本 安装/更新 Xray"
+    yellow " 2. 编译安装 Xray"
     echo ""
-    echo "------------------------------------"
+    echo " ------------------------------------"
     echo ""
-    yellow "3. 配置 Xray: 无TLS的协议"
-    green "4. 配置 Xray: VLESS + xtls + web (推荐)"
+    yellow " 3. 配置 Xray: 无TLS的协议"
+    green " 4. 配置 Xray: VLESS + xtls + web (推荐)"
+    green " 5. 配置 Xray: 用 REALITY \"借用\" 别人的证书"
     echo ""
-    echo "------------------------------------"
-    echo "11. 启动 Xray"
-    echo "12. 停止 Xray"
-    echo "13. 设置 Xray 开机自启动"
-    echo "14. 取消 Xray 开机自启动"
-    echo "15. 查看 Xray 运行状态"
-    red "16. 卸载 Xray"
-    echo "------------------------------------"
+    echo " ------------------------------------"
+    echo " 11. 启动 Xray"
+    echo " 12. 停止 Xray"
+    echo " 13. 设置 Xray 开机自启动"
+    echo " 14. 取消 Xray 开机自启动"
+    echo " 15. 查看 Xray 运行状态"
+    red " 16. 卸载 Xray"
+    echo " ------------------------------------"
     echo ""
-    yellow "100. 更新系统和安装依赖"
-    yellow "101. 申请TLS证书(http申请/自签)"
-    yellow "102. 安装最新版本的golang 及 编译 Xray 的其他组件"
+    yellow " 100. 更新系统和安装依赖"
+    yellow " 101. 申请TLS证书(http申请/自签)"
+    yellow " 102. 安装最新版本的golang 及 编译 Xray 的其他组件"
     echo ""
-    echo "------------------------------------"
+    echo " ------------------------------------"
     echo ""
-    yellow "0. 退出脚本"
+    yellow " 0. 退出脚本"
     read -p "清选择: " answer
     case $answer in
         0) exit 0 ;;
@@ -1557,6 +1735,7 @@ menu() {
         2) install_build ;;
         3) set_withoutTLS ;;
         4) set_withXTLS ;;
+        5) set_REALITY_steal ;;
         11) systemctl start xray ;;
         12) systemctl stop xray ;;
         13) systemctl enable xray ;;
