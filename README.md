@@ -19,11 +19,11 @@ https://github.com/tdjnodj/xray_script/tree/old
 
 - [x] xtls + fallback(ws)
 
-- [x] 随机`Policy`，以缓解[Xray #1511](https://github.com/XTLS/Xray-core/issues/1511)中的主动探测。
+- [x] 随机`Policy`，以缓解 https://github.com/XTLS/Xray-core/issues/1511 中的主动探测。
 
 - [ ] VLESS/VMess/Trojan + gRPC + TLS
 
-- [ ] REALITY 支持 (?)
+- [ ] REALITY 支持
 
 # Thanks
 
