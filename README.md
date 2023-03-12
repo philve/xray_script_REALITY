@@ -1,5 +1,4 @@
 # 使用
-提示: 本版本开发中
 
 ```shell
 wget https://raw.githubusercontent.com/tdjnodj/xray_script/main/xray.sh && bash xray.sh
