@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 打印彩色文字
+# print colored text
 red() {
 	echo -e "\033[31m\033[01m$1\033[0m"
 }
@@ -13,10 +13,10 @@ yellow() {
 	echo -e "\033[33m\033[01m$1\033[0m"
 }
 
-# 检测 root 权限
-[[ $EUID -ne 0 ]] && red "请在root用户下运行脚本" && exit 1
+# Check for root privileges
+[[ $EUID -ne 0 ]] && red "Please run the script under the root user" && exit 1
 
-# 系统相关
+# System related
 CMD=(
 	"$(grep -i pretty_name /etc/os-release 2>/dev/null | cut -d \" -f2)"
 	"$(hostnamectl 2>/dev/null | grep -i system | cut -d : -f2)"
@@ -26,14 +26,14 @@ CMD=(
 	"$(grep . /etc/issue 2>/dev/null | cut -d \\ -f1 | sed '/^[ ]*$/d')"
 )
 
-# 偷来的遗留
+# Legacy stolen
 RED="\033[31m"
 GREEN="\033[32m"
 YELLOW="\033[33m"
 BLUE="\033[36m"
 PLAIN="\033[0m"
 
-# 系统包管理器相关
+# System package manager related
 REGEX=("debian" "ubuntu" "centos|red hat|kernel|oracle linux|alma|rocky" "'amazon linux'")
 RELEASE=("Debian" "Ubuntu" "CentOS" "CentOS")
 PACKAGE_UPDATE=("apt-get update" "apt-get update" "yum -y update" "yum -y update")
@@ -48,10 +48,10 @@ for ((int = 0; int < ${#REGEX[@]}; int++)); do
 	[[ $(echo "$SYS" | tr '[:upper:]' '[:lower:]') =~ ${REGEX[int]} ]] && SYSTEM="${RELEASE[int]}" && [[ -n $SYSTEM ]] && break
 done
 
-[[ -z $SYSTEM ]] && red "不支持当前VPS系统，请使用主流的操作系统" && exit 1
+[[ -z $SYSTEM ]] && red "The current VPS system is not supported, please use a mainstream operating system" && exit 1
 [[ -z $(type -P curl) ]] && ${PACKAGE_UPDATE[int]} && ${PACKAGE_INSTALL[int]} curl
 
-# 生成随机的超时秒数以对抗 GFW 的主动探测
+# Generate random timeout seconds to counter active probing by GFW
 
 handshake=$(((($RANDOM*6)/32768)+4)) #4-10
 connIdle=$(((($RANDOM*201)/32768)+300)) # 300-500
@@ -60,27 +60,27 @@ downlinkOnly=$(((($RANDOM*11)/32768)+5)) # 5-15
 
 set_VMess_withoutTLS() {
     echo ""
-    read -p "请输入 VMess 监听端口(默认随机): " port
+    read -p "Please enter the VMess listening port (random by default): " port
     [[ -z "${port}" ]] && port=$(shuf -i200-65000 -n1)
     if [[ "${port:0:1}" == "0" ]]; then
-        red "端口不能以0开头"
-        port=$(shuf -i200-65000 -n1) #随机生成端口
+        red "The port cannot start with 0"
+        port=$(shuf -i200-65000 -n1) #Randomly generate ports
     fi
-    yellow "当前端口: $port"
+    yellow "current port: $port"
     echo ""
-    uuid=$(xray uuid) # 直接调用 Xray 的 uuid 指令以检测 是否安装 Xray
-    [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1 # 其实是历史遗留，顺便做了个功能
+    uuid=$(xray uuid) # Directly call the uuid command of Xray to detect whether Xray is installed
+    [[ -z "$uuid" ]] && red "Please install Xray first!" && exit 1 # In fact, it is a historical relic, and by the way, it has a function
     getUUID
-    yellow "当前uuid: $uuid"
+    yellow "current uuid: $uuid"
     echo ""
-    yellow "底层传输协议: "
-    yellow "1. TCP(默认)"
-    yellow "2. websocket(ws) (推荐)"
+    yellow "underlying transport protocol: "
+    yellow "1. TCP(default)"
+    yellow "2. websocket(ws) (recommend)"
     yellow "3. mKCP"
     yellow "4. HTTP/2"
     green "5. gRPC"
     echo ""
-    read -p "请选择: " answer
+    read -p "please choose: " answer
     case $answer in
         1) transport="tcp" ;;
         2) transport="ws" ;;
@@ -91,21 +91,21 @@ set_VMess_withoutTLS() {
     esac
 
     if [[ "$transport" == "tcp" ]]; then
-        yellow "伪装方式: "
-        yellow "1. none(默认，无伪装)"
-        yellow "2. http(可免流)"
-        read -p "请选择: " answer
+        yellow "camouflage: "
+        yellow "1. none(default, no masquerade)"
+        yellow "2. http(stream free)"
+        read -p "please choose: " answer
         if [[ "$answer" == "2" ]]; then
-            read -p "请输入伪装域名(不一定是自己的，默认: a.189.cn): " host
-            [[ -z "$host" ]] && host="a.189.cn"
-            read -p "请输入路径(以"/"开头，默认随机): " path
+            read -p "Please enter the fake domain name (not necessarily your own, default: bki.ir): " host
+            [[ -z "$host" ]] && host="bki.ir"
+            read -p "Please enter the path (beginning with "/", random by default): " path
             while true; do
                 if [[ -z "${path}" ]]; then
                     tmp=$(openssl rand -hex 6)
                     path="/$tmp"
                     break
                 elif [[ "${path:0:1}" != "/" ]]; then
-                    red "伪装路径必须以/开头！"
+                    red "The masquerade path must start with /!"
                     path=""
                 else
                     break
@@ -167,16 +167,16 @@ set_VMess_withoutTLS() {
 EOF
         echo ""
         ip=$(curl ip.sb)
-        yellow "协议: VMess"
+        yellow "protocol: VMess"
         yellow "ip: $ip"
-        yellow "端口: $port"
+        yellow "port: $port"
         yellow "uuid: $uuid"
-        yellow "传输模式: TCP"
-        yellow "伪装类型: http"
-        yellow "伪装域名: $host"
-        yellow "路径: $path"
+        yellow "transfer mode: TCP"
+        yellow "camouflage type: http"
+        yellow "fake domain name: $host"
+        yellow "path: $path"
         echo ""
-# 来自 网络跳跃
+# from network hop
 raw="{
   \"v\":\"2\",
   \"ps\":\"\",
@@ -192,7 +192,7 @@ raw="{
 }"
         link=$(echo -n ${raw} | base64 -w 0)
         shareLink="vmess://${link}"
-        yellow "分享链接: "
+        yellow "share link: "
         green "$shareLink"
 
         else
@@ -222,14 +222,14 @@ raw="{
 EOF
             echo ""
             ip=$(curl ip.sb)
-            yellow "协议: VMess"
+            yellow "protocol: VMess"
             yellow "ip: $ip"
-            yellow "端口: $port"
+            yellow "port: $port"
             yellow "uuid: $uuid"
-            yellow "传输模式: TCP"
-            yellow "伪装类型: http"
-            yellow "伪装域名: $host"
-            yellow "路径: $path"
+            yellow "transfer mode: TCP"
+            yellow "camouflage type: http"
+            yellow "fake domain nam: $host"
+            yellow "path: $path"
             echo ""
 raw="{
   \"v\":\"2\",
@@ -246,34 +246,34 @@ raw="{
 }"
             link=$(echo -n ${raw} | base64 -w 0)
             shareLink="vmess://${link}"
-            yellow "分享链接(v2RayN): "
+            yellow "share link(v2RayN): "
             green "$shareLink"
             echo ""
             newLink="${uuid}@${ip}:${port}"
-            yellow "分享链接(Xray标准): "
+            yellow "Share link (Xray standard): "
             green "vmess://${newLink}"
         fi
 
 
     elif [[ "$transport" == "ws" ]]; then
         echo ""
-        read -p "请输入路径(以"/"开头，默认随机): " path
+        read -p "Please enter the path (begins with "/", random by default): " path
         while true; do
             if [[ -z "${path}" ]]; then
                 tmp=$(openssl rand -hex 6)
                 path="/$tmp"
                 break
             elif [[ "${path:0:1}" != "/" ]]; then
-                red "伪装路径必须以/开头！"
+                red "Masquerade path must start with /!"
                 path=""
             else
                 break
             fi
         done
-        yellow "当前路径: $path"
+        yellow "current path: $path"
         echo ""
-        read -p "请输入ws域名: 可用于免流(默认 a.189.cn): " host
-        [[ -z "$host" ]] && host="a.189.cn"
+        read -p "Please enter ws domain name: can be used for streaming free (default bki.ir): " host
+        [[ -z "$host" ]] && host="bki.ir"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
     "policy": {
@@ -320,14 +320,14 @@ raw="{
 EOF
         ip=$(curl ip.sb)
         echo ""
-        yellow "协议: VMess"
+        yellow "protocol: VMess"
         yellow "ip: $ip"
-        yellow "端口: $port"
+        yellow "port: $port"
         yellow "uuid: $uuid"
-        yellow "额外ID: 0"
-        yellow "传输方式: ws(websocket)"
-        yellow "路径: $path 或 ${path}?ed=2048 (后面这个延迟更低，但可能增加特征)"
-        yellow "ws host(伪装域名): $host"
+        yellow "Extra ID: 0"
+        yellow "Transmission method: WebSocket (ws)"
+        yellow "Path: $path or ${path}?ed=2048 (the latter has a lower latency but may increase detection)"
+        yellow "ws host(fake domain name): $host"
 raw="{
   \"v\":\"2\",
   \"ps\":\"\",
@@ -343,40 +343,40 @@ raw="{
         link=$(echo -n ${raw} | base64 -w 0)
         shareLink="vmess://${link}"
         echo ""
-        yellow "分享链接: "
+        yellow "share link: "
         green "$shareLink"
         newPath=$(echo -n $path | xxd -p | tr -d '\n' | sed 's/\(..\)/%\1/g')
         newLink="${uuid}@${ip}:${port}?type=ws&host=${host}&path=${newPath}"
-        yellow "分享链接(Xray标准): "
+        yellow "Share link (Xray standard): "
         green "vmess://${newLink}"
 
 
     elif [[ "$transport" == "mKCP" ]]; then
         echo ""
-        yellow "下行带宽:"
-        yellow "单位: MB/s，注意是 Byte 而非 bit"
-        yellow "默认: 100"
-        yellow "建议设置为一个较大值"
-        read -p "请设置: " uplinkCapacity
+        yellow "downlink bandwidth:"
+        yellow "Unit: MB/s, note that it is Byte instead of bit"
+        yellow "default: 100"
+        yellow "It is recommended to set a larger value"
+        read -p "please set: " uplinkCapacity
         [[ -z "$uplinkCapacity" ]] && uplinkCapacity=100
-        yellow "当前上行带宽: $uplinkCapacity"
+        yellow "Current upstream bandwidth: $uplinkCapacity"
         echo ""
-        yellow "上行带宽: "
-        yellow "单位: MB/s，注意是 Byte 而非 bit"
-        yellow "默认: 100"
-        yellow "建议设为你的真实上行带宽到它的两倍"
-        read -p "请设置: " downlinkCapacity
+        yellow "upstream bandwidth: "
+        yellow "Unit: MB/s, note that it is Byte instead of bit"
+        yellow "default: 100"
+        yellow "It is recommended to set your real upstream bandwidth to twice its"
+        read -p "please set: " downlinkCapacity
         [[ -z "$downlinkCapacity" ]] && downlinkCapacity=100
-        yellow "当前下行带宽: $downlinkCapacity"
+        yellow "Current downlink bandwidth: $downlinkCapacity"
         echo ""
-        yellow "伪装类型: "
-        yellow "1. 不伪装:none(默认)"
-        yellow "2. SRTP: 伪装成 SRTP 数据包，会被识别为视频通话数据（如 FaceTime）"
-        yellow "3. uTP: 伪装成 uTP 数据包，会被识别为 BT 下载数据"
-        yellow "4. wechat-video: 伪装成微信视频通话的数据包"
-        yellow "5. DTLS: 伪装成 DTLS 1.2 数据包"
-        yellow "6. wireguard: 伪装成 WireGuard 数据包。（并不是真正的 WireGuard 协议）"
-        read -p "请选择: " answer
+	yellow "Camouflage type:"
+	yellow "1. no masquerading: none (default)"
+	yellow "2. SRTP: Camouflage as SRTP data packets, will be recognized as video call data (such as FaceTime)"
+	yellow "3. uTP: Camouflage as uTP data packets, will be recognized as BT download data"
+	yellow "4. WeChat Video: Camouflage as WeChat's video calls data packets"
+	yellow "5. DTLS: Camouflage as DTLS 1.2 data packets."
+	yellow "6. WireGuard: Camouflage as WireGuard data packets. (It is not the actual WireGuard protocol)"
+	read -p "Please choose: " answer
         case $answer in
             1) camouflageType="none" ;;
             2) camouflageType="srtp" ;;
@@ -386,7 +386,7 @@ raw="{
             6) camouflageType="wireguard" ;;
             *) camouflageType="none" ;;
         esac
-        yellow "当前伪装: $camouflageType"
+        yellow "current disguise: $camouflageType"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
     "inbounds": [
@@ -430,16 +430,16 @@ raw="{
 EOF
         echo ""
         ip=$(curl ip.sb)
-        yellow "协议: VMess"
-        yellow "传输协议: mKCP"
-        yellow "ip: $ip"
-        yellow "端口: $port"
-        yellow "uuid: $uuid"
-        yellow "额外ID: 0"
-        yellow "伪装类型: $camouflageType"
-        yellow "上行带宽: $uplinkCapacity"
-        yellow "下行带宽: $downlinkCapacity"
-        yellow "mKCP seed(混淆密码): 无"
+        yellow "Protocol: VMess"
+	yellow "Transfer Protocol: mKCP"
+	yellow "IP: $ip"
+	yellow "Port: $port"
+	yellow "UUID: $uuid"
+	yellow "Extra ID: 0"
+	yellow "Camouflage type: $camouflageType"
+	yellow "Uplink capacity: $uplinkCapacity"
+	yellow "Downlink capacity: $downlinkCapacity"
+	yellow "mKCP seed (obfuscation password): None"
         echo ""
 raw="{
   \"v\":\"2\",
@@ -454,35 +454,35 @@ raw="{
 }"
         link=$(echo -n ${raw} | base64 -w 0)
         shareLink="vmess://${link}"
-        yellow "分享链接: "
+        yellow "share link: "
         green "$shareLink"
         newLink="${uuid}@${ip}:${port}?type=kcp&headerType=$camouflageType"
-        yellow "分享链接(Xray标准): "
+        yellow "Share link (Xray standard): "
         green "vmess://${newLink}"
 
 
     elif [[ "$transport" == "http" ]]; then
         echo ""
-        red "警告: 由于 HTTP/2 官方的建议， Xray 客户端的 HTTP/2 须强制开启TLS。故本功能仅作为后端使用，因此只监听本地地址(127.0.0.1)"
-        red "不懂的可以不填域名以退出"
-        read -p "请输入域名: " domain
-        [[ -z "$domain" ]] && red "请输入域名！" && exit 1
-        yellow "当前域名: $domain"
+        red "Warning: Due to HTTP/2 official recommendation, Xray client's HTTP/2 must force TLS to be enabled. Therefore, this feature is only used as a backend, so it only listens to the local address (127.0.0.1)"
+        red "If you don’t understand, you can leave out the domain name"
+        read -p "Please enter a domain name: " domain
+        [[ -z "$domain" ]] && red "Please enter a domain name!" && exit 1
+        yellow "current domain name: $domain"
         echo ""
-        read -p "请输入路径(以"/"开头，默认随机): " path
+        read -p "Please enter the path (begins with "/", random by default): " path
         while true; do
             if [[ -z "${path}" ]]; then
                 tmp=$(openssl rand -hex 6)
                 path="/$tmp"
                 break
             elif [[ "${path:0:1}" != "/" ]]; then
-                red "伪装路径必须以/开头！"
+                red "Camouflage path must start with / !"
                 path=""
             else
                 break
             fi
         done
-        yellow "当前路径: $path"
+        yellow "current path: $path"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
   "inbounds": [
@@ -518,24 +518,24 @@ raw="{
 }
 EOF
         echo ""
-        yellow "协议: VMess"
-        yellow "端口: $port"
-        yellow "uuid: $uuid"
-        yellow "额外ID: 0"
-        yellow "传输协议: HTTP/2(http)"
-        yellow "域名: $domain"
-        yellow "路径: $path"
+	yellow "Protocol: VMess"
+	yellow "Port: $port"
+	yellow "UUID: $uuid"
+	yellow "Extra ID: 0"
+	yellow "Transfer Protocol: HTTP/2 (http)"
+	yellow "Domain name: $domain"
+	yellow "Path: $path"
         echo ""
-        yellow "提示: 客户端不能直接连接！服务端只监听 127.0.0.1 "
+        yellow "Note: The client cannot connect directly! The server only listens to 127.0.0.1 "
 
 
     elif [[ "$transport" == "gRPC" ]]; then
         echo ""
-        red "警告: 客户端仅开启TLS才能连接，所以这里只监听 127.0.0.1"
-        red "不懂的请退出"
+        red "Warning: The client can only connect when TLS is enabled, so it only listens to 127.0.0.1"
+        red "If you don't understand, please exit"
         yellow "server name: "
-        yellow "作用类似于ws中的"path""
-        read -p "请输入: " serverName
+        yellow "Similar to the 'path' parameter in ws"
+        read -p "please enter: " serverName
         while true; do
             if [[ -z "${serverName}" ]]; then
                 serverName=$(openssl rand -hex 6)
@@ -544,7 +544,7 @@ EOF
                 break
             fi
         done
-        yellow "当前server name: $serverName"
+        yellow "current server name: $serverName"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
     "inbounds": [
@@ -577,11 +577,11 @@ EOF
 }
 EOF
         echo ""
-        yellow "协议: VMess"
-        yellow "端口: $port"
+        yellow "protocol: VMess"
+        yellow "port: $port"
         yellow "uuid: $uuid"
-        yellow "额外ID: 0"
-        yellow "传输方式: gRPC"
+        yellow "Extra ID: 0"
+        yellow "transfer method: gRPC"
         yellow "server name: $serverName"
 
         
@@ -594,29 +594,29 @@ EOF
 
 set_VLESS_withoutTLS() {
     echo ""
-    red "警告: 会覆盖原有配置!"
+    red "Warning: Old configuration will be overwritten!"
     echo ""
-    read -p "请输入 VLESS 监听端口: " port
+    read -p "Please enter the VLESS listening port: " port
     [[ -z "${port}" ]] && port=$(shuf -i200-65000 -n1)
     if [[ "${port:0:1}" == "0" ]]; then
-        red "端口不能以0开头"
+        red "Port cannot start with 0"
         port=$(shuf -i200-65000 -n1)
     fi
-    yellow "当前端口: $port"
+    yellow "current port: $port"
     echo ""
     uuid=$(xray uuid)
-    [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1
+    [[ -z "$uuid" ]] && red "Please install Xray first!" && exit 1
     getUUID
-    yellow "当前uuid: $uuid"
+    yellow "current uuid: $uuid"
     echo ""
-    yellow "底层传输协议: "
-    yellow "注: 由于 VLESS 是明文传输，所以砍掉了tcp;除 mKCP 外，其他选项都监听 127.0.0.1!"
-    yellow "1. websocket(ws) (推荐)"
-    yellow "2. mKCP (默认)"
+    yellow "underlying transport protocol: "
+    yellow "Note: due to VLESS's use of plain-text transmission, the "tcp" option has been removed.;all other options, except for mKCP, will be listening only to the address 127.0.0.1"
+    yellow "1. websocket(ws) (recommend)"
+    yellow "2. mKCP (default)"
     yellow "3. HTTP/2"
     green "4. gRPC"
     echo ""
-    read -p "请选择: " answer
+    read -p "please choose: " answer
     case $answer in
         1) transport="ws" ;;
         2) transport="mKCP" ;;
@@ -624,27 +624,27 @@ set_VLESS_withoutTLS() {
         4) transport="gRPC" ;;
         *) transport="mKCP" ;;
     esac
-    yellow "当前底层传输协议: $transport"
+    yellow "Current underlying transport protocol: $transport"
     echo ""
 
     if [[ "$transport" == "ws" ]] ;then
-        read -p "请输入路径(以"/"开头，默认随机): " path
+        read -p "Please enter the path (begins with "/", random by default): " path
         while true; do
             if [[ -z "${path}" ]]; then
                 tmp=$(openssl rand -hex 6)
                 path="/$tmp"
                 break
             elif [[ "${path:0:1}" != "/" ]]; then
-                red "伪装路径必须以/开头！"
+                red "Camouflage path must start with /！"
                 path=""
             else
                 break
             fi
         done
-        yellow "当前路径: $path"
+        yellow "current path: $path"
         echo ""
-        read -p "请输入ws域名: (默认 a.189.cn): " host
-        [[ -z "$host" ]] && host="a.189.cn"
+        read -p "Please enter the ws domain name: (default bki.ir): " host
+        [[ -z "$host" ]] && host="bki.ir"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
     "inbounds": [
@@ -682,45 +682,45 @@ set_VLESS_withoutTLS() {
 }
 EOF
         echo ""
-        yellow "协议: VLESS"
-        yellow "端口: $port"
-        yellow "uuid: $uuid"
-        yellow "额外ID: 0"
-        yellow "传输方式: ws(websocket)"
-        yellow "路径: $path 或 ${path}?ed=2048 (后面这个延迟更低，但可能增加特征)"
-        yellow "ws host(伪装域名): $host"
+ yellow "Protocol: VLESS" 
+yellow "Port: $port" 
+yellow "UUID: $uuid" 
+yellow "Extra ID: 0" 
+yellow "Transfer Protocol: ws (websocket)" 
+yellow "Path: $path or ${path}?ed=2048 (the latter has lower latency but may increase the chance of detection)" 
+yellow "ws host (camouflage domain): $host"
     
 
     elif [[ "$transport" == "mKCP" ]] ;then
         echo ""
-        yellow "下行带宽:"
-        yellow "单位: MB/s，注意是 Byte 而非 bit"
-        yellow "默认: 100"
-        yellow "建议设置为一个较大值"
-        read -p "请设置: " uplinkCapacity
+        yellow "downlink bandwidth:"
+        yellow "Unit: MB/s, Note that it's Bytes, not bits"
+        yellow "Default: 100"
+        yellow "It is recommended to set a larger value"
+        read -p "please set: " uplinkCapacity
         [[ -z "$uplinkCapacity" ]] && uplinkCapacity=100
-        yellow "当前上行带宽: $uplinkCapacity"
+        yellow "Current upstream bandwidth: $uplinkCapacity"
         echo ""
-        yellow "上行带宽: "
-        yellow "单位: MB/s，注意是 Byte 而非 bit"
-        yellow "默认: 100"
-        yellow "建议设为你的真实上行带宽到它的两倍"
-        read -p "请设置: " downlinkCapacity
+        yellow "upstream bandwidth: "
+        yellow "Unit: MB/s, Note that it's Bytes, not bits"
+        yellow "default: 100"
+        yellow "We suggest setting it to twice your actual uplink capacity"
+        read -p "Please set: " downlinkCapacity
         [[ -z "$downlinkCapacity" ]] && downlinkCapacity=100
-        yellow "当前下行带宽: $downlinkCapacity"
+        yellow "Current downlink bandwidth: $downlinkCapacity"
         echo ""
-        read -p "混淆密码(默认随机): " seed
+        read -p "Obfuscation password (default random): " seed
         [[ -z "$seed" ]] && seed=$(openssl rand -base64 16)
-        yellow "当前混淆密码: $seed"
+        yellow "Current obfuscation password: $seed"
         echo ""
-        yellow "伪装类型: "
-        yellow "1. 不伪装:none(默认)"
-        yellow "2. SRTP: 伪装成 SRTP 数据包，会被识别为视频通话数据（如 FaceTime）"
-        yellow "3. uTP: 伪装成 uTP 数据包，会被识别为 BT 下载数据"
-        yellow "4. wechat-video: 伪装成微信视频通话的数据包"
-        yellow "5. DTLS: 伪装成 DTLS 1.2 数据包"
-        yellow "6. wireguard: 伪装成 WireGuard 数据包。（并不是真正的 WireGuard 协议）"
-        read -p "请选择: " answer
+        yellow "Camouflage type: "
+        yellow "1. no masquerading: none (default)"
+        yellow "2. SRTP: Camouflage as SRTP data packets, will be recognized as video call data (such as FaceTime)"
+        yellow "3. uTP: Camouflage as uTP data packets, will be recognized as BT download data"
+        yellow "4. wechat-video: Camouflage as WeChat's video call data packets"
+        yellow "5. DTLS: Camouflage as DTLS 1.2 data packets"
+        yellow "6. wireguard: Camouflage as WireGuard data packets. (It is not the actual WireGuard protocol)"
+        read -p "please choose: " answer
         case $answer in
             1) camouflageType="none" ;;
             2) camouflageType="srtp" ;;
@@ -730,7 +730,7 @@ EOF
             6) camouflageType="wireguard" ;;
             *) camouflageType="none" ;;
         esac
-        yellow "当前伪装: $camouflageType"
+        yellow "Current camouflage: $camouflageType"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
     "inbounds": [
@@ -776,42 +776,42 @@ EOF
 EOF
         echo ""
         ip=$(curl ip.sb)
-        yellow "协议: VLESS"
-        yellow "传输协议: mKCP"
+        yellow "Protocol: VLESS"
+        yellow "Transfer Protocol: mKCP"
         yellow "ip :$ip"
-        yellow "端口: $port"
+        yellow "Port: $port"
         yellow "uuid: $uuid"
-        yellow "额外ID: 0"
-        yellow "伪装类型: $camouflageType"
-        yellow "上行带宽: $uplinkCapacity"
-        yellow "下行带宽: $downlinkCapacity"
-        yellow "mKCP seed(混淆密码): $seed"
+        yellow "Extra ID: 0"
+        yellow "Camouflage type: $camouflageType"
+        yellow "upstream bandwidth: $uplinkCapacity"
+        yellow "downlink bandwidth: $downlinkCapacity"
+        yellow "mKCP seed(obfuscation password): $seed"
         echo ""
         newSeed=$(echo -n $seed | xxd -p | tr -d '\n' | sed 's/\(..\)/%\1/g')
         newLink="${uuid}@${ip}:${port}?type=kcp&headerType=${camouflageType}&seed=${newSeed}"
-        yellow "分享链接(Xray标准): "
+        yellow "Share link (Xray standard): "
         green "vless://${newLink}"
 
 
     elif [[ "$transport" == "http" ]] ;then
-        read -p "请输入域名: " domain
-        [[ -z "$domain" ]] && red "请输入域名！" && exit 1
-        yellow "当前域名: $domain"
+        read -p "Please enter a domain name: " domain
+        [[ -z "$domain" ]] && red "Please enter a domain name！" && exit 1
+        yellow "current domain name: $domain"
         echo ""
-        read -p "请输入路径(以"/"开头，默认随机): " path
+        read -p "Please enter the path (begins with "/", random by default): " path
         while true; do
             if [[ -z "${path}" ]]; then
                 tmp=$(openssl rand -hex 6)
                 path="/$tmp"
                 break
             elif [[ "${path:0:1}" != "/" ]]; then
-                red "路径必须以/开头！"
+                red "The path must start with /!"
                 path=""
             else
                 break
             fi
         done
-        yellow "当前路径: $path"
+        yellow "current path: $path"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
     "inbounds": [
@@ -849,22 +849,22 @@ EOF
 }
 EOF
         echo ""
-        yellow "协议: VLESS"
-        yellow "端口: $port"
+        yellow "Protocol: VLESS"
+        yellow "Port: $port"
         yellow "uuid: $uuid"
-        yellow "额外ID: 0"
-        yellow "传输协议: HTTP/2(http)"
-        yellow "域名: $domain"
-        yellow "路径: $path"
+        yellow "Extra ID: 0"
+        yellow "Transfer Protocol: HTTP/2(http)"
+        yellow "Domain name: $domain"
+        yellow "Path: $path"
 
 
     elif [[ "$transport" == "gRPC" ]] ;then
         echo ""
-        red "警告: 客户端仅开启TLS才能连接，所以这里只监听 127.0.0.1"
-        red "不懂的请退出"
+        red "Warning: The client can only connect when TLS is enabled, so it only listens to 127.0.0.1"
+        red "If you don't understand, please exit"
         yellow "server name: "
-        yellow "作用类似于ws中的"path""
-        read -p "请输入: " serverName
+        yellow "Functions similarly to the 'path' parameter in ws"
+        read -p "Please enter: " serverName
         while true; do
             if [[ -z "${serverName}" ]]; then
                 serverName=$(openssl rand -hex 6)
@@ -873,7 +873,7 @@ EOF
                 break
             fi
         done
-        yellow "当前server name: $serverName"
+        yellow "current server name: $serverName"
         cat >/usr/local/etc/xray/config.json <<-EOF
 {
     "inbounds": [
@@ -909,11 +909,11 @@ EOF
 }
 EOF
         echo ""
-        yellow "协议: VMess"
-        yellow "端口: $port"
+        yellow "protocol: VMess"
+        yellow "Port: $port"
         yellow "uuid: $uuid"
-        yellow "额外ID: 0"
-        yellow "传输方式: gRPC"
+        yellow "Extra ID: 0"
+        yellow "transfer method: gRPC"
         yellow "server name: $serverName"
     fi
 
@@ -923,32 +923,32 @@ EOF
     ufw reload
 }
 
-# 偷懒了，毕竟 shadowsocks 原版没有 udp over tcp
+#  I was lazy, after all, the original version of Shadowsocks does not have UDP over TCP
 set_shadowsocks_withoutTLS() {
     echo ""
-    read -p "请输入 shadowsocks 监听端口(默认随机): " port
+    read -p "Please enter Shadowsocks listening port (default random): " port
     [[ -z "${port}" ]] && port=$(shuf -i200-65000 -n1)
     if [[ "${port:0:1}" == "0" ]]; then
-        red "端口不能以0开头"
+        red "Port cannot start with 0"
         port=$(shuf -i200-65000 -n1)
     fi
-    yellow "当前 shadowsocks 监听端口: $port"
+    yellow "Current shadowsocks listening port: $port"
     echo ""
     echo ""
-    yellow "加密方式: "
-    red "注: 带"2022"的为 shadowsocks-2022 加密方式，目前支持的客户端较少，但抗封锁性更强，且能开启 UDP over TCP"
-    yellow "按推荐程度排序"
+    yellow "Encryption method: "
+    red "Note: Encryption methods with '2022' in their names are Shadowsocks-2022 encryption methods, which are currently supported by fewer clients but are more resistant to blocking and can enable UDP over TCP"
+    yellow "Sorted by recommended order"
     echo ""
     green "1. 2022-blake3-aes-128-gcm"
     green "2. 2022-blake3-aes-256-gcm"
     green "3. 2022-blake3-chacha20-poly1305"
-    yellow "4. aes-128-gcm(推荐)"
+    yellow "4. aes-128-gcm(recommended)"
     yellow "5. aes-256-gcm"
-    green "6. chacha20-ietf-poly1305(默认)"
+    green "6. chacha20-ietf-poly1305(default)"
     yellow "7. xchacha20-ietf-poly1305"
-    red "8 none(不加密，选择后会自动只监听 127.0.0.1 )"
+    red "8 none(no encryption, when selected, it will automatically only listen to 127.0.0.1 )"
     echo ""
-    read -p "请选择: " answer
+    read -p "Please choose: " answer
     case $answer in
         1) method="2022-blake3-aes-128-gcm" && ss2022="true" ;;
         2) method="2022-blake3-aes-256-gcm" && ss2022="true" ;;
@@ -960,15 +960,15 @@ set_shadowsocks_withoutTLS() {
         8) method="none" ;;
         *) method="chacha20-ietf-poly1305" ;;
     esac
-    yellow "当前加密方式: $method"
+    yellow "Current encryption method: $method"
     echo ""
-    yellow "注意: 在 Xray 中，shadowsocks-2022都可以使用32位密码，但标准实现中，2022-blake3-aes-128-gcm使用16位密码，其他 Xray 支持的2022系加密使用32位密码。"
-    yellow "不懂直接回车"
-    yellow "16位密码: "
+    yellow "Note: In Xray, Shadowsocks-2022 encryption methods can all use a 32-bit password, but in standard implementation, 2022-blake3-aes-128-gcm uses a 16-bit password, and other 2022-series encryption methods supported by Xray use a 32-bit password"
+    yellow "Press enter if you do not understand."
+    yellow "16-bit password: "
     openssl rand -base64 16
-    read -p "请输入 shadowsocks 密码(默认32位): " password
+    read -p "Please enter the shadowsocks password (default 32 bits): " password
     [[ -z "$password" ]] && password=$(openssl rand -base64 32)
-    yellow "当前密码: $password"
+    yellow "Current Password: $password"
     if [[ "$method" == "none" ]]; then
         listen="127.0.0.1"
     else
@@ -1033,50 +1033,50 @@ EOF
 
 set_withoutTLS() {
     echo ""
-    red "警告: 可能会删除原有配置!"
-    yellow "请选择协议: "
+    red "WARNING: Old configuration may be deleted!"
+    yellow "Please select a protocol: "
     yellow "1. VMess"
     yellow "2. shadowsocks"
-    yellow "3. VLESS(由于VLESS没有加密，请勿使用VLESS直接过墙!)"
+    yellow "3. VLESS(Do not use VLESS to bypass the Great Firewall directly as VLESS has no encryption!)"
     echo ""
-    read -p "请选择: " protocol
+    read -p "Please choose: " protocol
     case $protocol in
         1) set_VMess_withoutTLS ;;
         2) set_shadowsocks_withoutTLS ;;
         3) set_VLESS_withoutTLS ;;
-        *) red "请输入正确的选项！" ;;
+        *) red "Please enter the correct option!" ;;
     esac
 }
 
 set_withXTLS() {
     echo ""
-    yellow "请确保: "
-    yellow "1. 已安装 Xray"
-    yellow "2. 申请了自己的 TLS 证书"
-    yellow "3. 将使用系统的包管理器(重新)安装 nginx"
-    red "4. 原 nginx 和 Xray 配置将被删除！！！"
+    yellow "Please ensure: "
+    yellow "1. Xray is installed"
+    yellow "2. You have applied for your own TLS certificate"
+    yellow "3. Nginx will be (re)installed using the system's package manager"
+    red "4. The original Nginx and Xray configuration will be deleted!!!"
     echo ""
-    read -p "输入任意内容继续，按 ctrl + c 退出" rubbish
+    read -p "Press any key to continue or press ctrl + c to exit" rubbish
     echo ""
     echo ""
     echo ""
     
-    read -p "请输入 VLESS 监听端口(默认443): " port
+    read -p "Please enter the VLESS listening port (default 443): " port
     [[ -z "${port}" ]] && port=443
     if [[ "${port:0:1}" == "0" ]]; then
-        red "端口不能以0开头"
+        red "Port cannot start with 0"
         port=443
     fi
-    yellow "当前端口: $port"
+    yellow "Current port: $port"
     echo ""
 
-    read -p "请输入回落网站端口(默认 80): " fallbackPort
+    read -p "Please enter the fallback website port (default 80): " fallbackPort
     [[ -z "${fallbackPort}" ]] && fallbackPort=80
     if [[ "${fallbackPort:0:1}" == "0" ]]; then
-        red "端口不能以0开头"
+        red "Port cannot start with 0"
         fallbackPort=80
     fi
-    yellow "当前端口: $fallbackPort"
+    yellow "Current fallback port: $fallbackPort"
 
     echo ""
     wsPort=$(shuf -i10000-65000 -n1)
@@ -1087,7 +1087,7 @@ set_withXTLS() {
     fallbackPortUsed=$(lsof -i :$fallbackPort)
     wsPortUsed=$(lsof -i :$fallbackPort)
     fallbackPort2Used=$(lsof -i :$fallbackPort2)
-    yellow "当前需要用到的端口占用: "
+    yellow "Ports currently in use: "
     yellow "$portUsed"
     echo ""
     yellow "$fallbackPortUsed"
@@ -1096,66 +1096,66 @@ set_withXTLS() {
     echo ""
     yellow "$fallbackPort2Used"
     echo ""
-    read -p "有占用请 ctrl + c 推出，无占用或强制执行请回车: " rubbish
+    read -p "If there is any usage, press ctrl + c to exit. If no usage or forced execution, press enter: " rubbish
     echo ""
 
     uuid=$(xray uuid)
-    [[ -z "$uuid" ]] && red "请先安装 Xray !" && exit 1
+    [[ -z "$uuid" ]] && red "Please install Xray first!" && exit 1
     getUUID
-    yellow "当前uuid: $uuid"
+    yellow "Current uuid: $uuid"
 
-    yellow "流控: "
-    green "1. xtls-rprx-vision,none(Xray v1.7.5 后被移除)"
-    yellow "2. xtls-rprx-vision(默认)"
-    yellow "3. xtls-rprx-direct (Xray v1.7.5 后被移除)"
-    red "4 xtls-rprx-origin(不推荐)  (Xray v1.7.5 后被移除)"
-    yellow "5. (不使用流控)"
+    yellow "Flow control: "
+    green "1. xtls-rprx-vision,none(Removed from Xray v1.7.5)"
+    yellow "2. xtls-rprx-vision(default)"
+    yellow "3. xtls-rprx-direct (Removed from Xray v1.7.5)"
+    red "4 xtls-rprx-origin(Not recommended)  (Removed from Xray v1.7.5)"
+    yellow "5. (No flow control)"
     echo ""
-    green "一些提示: "
-    green "虽然旧的流控已被弃用，但考虑到新流控未经时间检验，使用旧流控有出其不意的效果"
+    green "Some tips: "
+    green "Although the old flow control has been deprecated，but considering that the new flow control has not undergone time testing，Using old flow control has unexpected effect"
     echo ""
-    read -p "请选择: " answer
+    read -p "Select an option: " answer
     case $answer in
         1) flow="xtls-rprx-vision,none" && flow2="xtls-rprx-vision" && TLS="tls" ;;
         2) flow="xtls-rprx-vision" && flow2="xtls-rprx-vision" && TLS="tls" ;;
         3) flow="xtls-rprx-direct" && flow2="xtls-rprx-direct" && TLS="xtls" ;;
         4) flow="xtls-rprx-origin" && flow2="xtls-rprx-origin" && TLS="xtls" ;;
         5) flow="" && flow2="" && TLS="tls" ;;
-        *) red "已自动选择 xtls-rprx-vision!" && flow="xtls-rprx-vision" && flow2="xtls-rprx-vision" && TLS="tls" ;;
+        *) red "xtls-rprx-vision automatically chosen!" && flow="xtls-rprx-vision" && flow2="xtls-rprx-vision" && TLS="tls" ;;
     esac
-    yellow "当前流控: $flow"
+    yellow "Current flow control: $flow"
 
     echo ""
-    read -p "请输入你的域名: " domain
-    yellow "当前域名: $domain"
+    read -p "Please enter your domain name: " domain
+    yellow "Current domain name: $domain"
     echo ""
-    read -p "请输入证书路径(不要以'~'开头！): " cert
+    read -p "Please enter the certificate path (do not start with '~'!): " cert
     if [[ ${cert:0:1} == "~" ]] || [ -z "$cert" ]; then
-        red "请输入证书路径 或 证书路径不能以 ~ 开头！" && exit 1
+        red "Please enter the path to the certificate or the path to the certificate cannot start with ~!" && exit 1
     fi
-    yellow "当前证书路径: $cert"
+    yellow "Current certificate path: $cert"
     echo ""
-    read -p "请输入密钥路径(不要以'~'开头！): " key
+    read -p "Please enter the key path (do not start with '~'!): " key
     if [[ ${key:0:1} == "~" ]] || [ -z "$key" ]; then
-        red "请输入密钥路径 或 密钥路径不能以 ~ 开头！" && exit 1
+        red "Please enter the path to the key or the path to the key cannot start with '~' ! " && exit 1
     fi
-    yellow "当前密钥路径: $key"
+    yellow "Current key path: $key"
 
     echo ""
-    read -p "请输入反代网站网址(必须为 https 网站，默认: www.bing.com): " forwardWeb
+    read -p "Please enter the fallback website URL (must be an HTTPS website, default: www.bing.com): " forwardWeb
     [ -z "$forwardWeb" ] && forwardWeb="www.bing.com"
-    yellow "当前反代网站: $forwardWeb"
+    yellow "Current fallback website: $forwardWeb"
     echo ""
 
-# 配置详解
-# http/1.1 就回落到 80 端口，h2 回落到高位端口。毕竟浏览器不会使用 h2c。
-# 反代网站对新手友好。
+# Configuration details:
+# http/1.1 falls back to port 80, h2 falls back to a high port. After all, browsers don't use h2c.
+# The forwarding website is beginner friendly.
 
-    green "正在安装 nginx ......"
+    green "Installing Nginx......"
     ${PACKAGE_UPDATE[int]}
     ${PACKAGE_INSTALL[int]} nginx
     echo ""
-    green "正在生成 nginx 配置"
+    green "Generating Nginx configuration"
     cat >/etc/nginx/nginx.conf <<-EOF
 user root;
 worker_processes auto;
@@ -1219,11 +1219,11 @@ EOF
     systemctl stop nginx
     systemctl start nginx
 
-# 默认用户等级似乎是 0,但我整篇都搞成了 1。
-# 将错就错吧，希望用户在浏览配置时能知道。
+# The default user level seems to be 0, but I made everything 1.
+# Let's just stick with it, hoping that the user will know when browsing the configuration.
 
     echo ""
-    green "正在配置 Xray"
+    green "Configuring Xray"
     cp $cert /usr/local/etc/xray/cert.crt
     cp $key /usr/local/etc/xray/key.key
     cat >/usr/local/etc/xray/config.json <<-EOF
@@ -1342,91 +1342,91 @@ raw="{
     wsLink2="vmess://$tmpLink"
     tlsLink="vless://${uuid}@${linkIP}:${port}?sni=${domain}&security=tls&type=tcp"
 
-    yellow "节点一:"
-    yellow "协议: VLESS"
-    yellow "地址: $ip 或 $domain"
-    yellow "端口: $port"
-    yellow "底层传输方式: TCP"
-    yellow "传输层安全: $TLS"
-    yellow "流控: $flow2"
+    yellow "Node One:"
+    yellow "Protocol: VLESS"
+    yellow "Address: $ip or $domain"
+    yellow "Port: $port"
+    yellow "Underlying transport protocol: TCP"
+    yellow "Transport layer security: $TLS"
+    yellow "Flow control: $flow2"
     yellow "UUID: $uuid"
-    yellow "服务名称指示(sni): $domain"
+    yellow "Service name indication (SNI): $domain"
     echo ""
-    green "分享链接: $xtlsLink"
+    green "Sharing link: $xtlsLink"
 
     echo ""
     echo ""
-    yellow "节点二:"
-    yellow "协议: VMess"
-    yellow "地址: $ip 或 $domain"
-    yellow "端口: $port"
-    yellow "底层传输方式: ws"
-    yellow "ws 路径: $wsPath"
+    yellow "Node Two:"
+    yellow "Protocol: VMess"
+    yellow "Address: $ip or $domain"
+    yellow "Port: $port"
+    yellow "Underlying transport protocol: ws"
+    yellow "ws path: $wsPath"
     yellow "ws host: $domain"
-    yellow "传输层安全: TLS"
+    yellow "Transport layer security: TLS"
     yellow "UUID: $uuid"
-    yellow "额外ID: 0"
-    yellow "服务名称指示(sni): $domain"
+    yellow "Extra ID: 0"
+    yellow "Service name indication (SNI): $domain"
     echo ""
-    yellow "分享链接(DuckSoft): $wsLink1"
+    yellow "Sharing link (DuckSoft): $wsLink1"
     echo ""
-    green "分享链接(v2rayN): $wsLink2"
+    green "Sharing link (v2rayN): $wsLink2"
 
     if [ "$flow2" == "xtls-rprx-vision" ]; then
-        yellow "节点三:"
-        yellow "协议: VLESS"
-        yellow "地址: $ip 或 $domain"
-        yellow "端口: $port"
-        yellow "传输层安全: TLS"
+        yellow "Node Three:"
+        yellow "Protocol: VLESS"
+        yellow "Address: $ip or $domain"
+        yellow "Port: $port"
+        yellow "Transport layer security: TLS"
         yellow "UUID: $uuid"
-        yellow "服务名称指示(sni): $domain"
+        yellow "Service name indication (SNI): $domain"
         echo ""
-        green "分享链接: $tlsLink"
+        green "Sharing link: $tlsLink"
     fi
 }
 
 set_REALITY_steal() {
     echo ""
-    yellow " 请确保: "
-    yellow " 1. 会使用 REALITY 客户端，不会用请离开"
-    yellow " 2. 已用脚本的 1/2 选项 安装 Xray"
+    yellow " Please make sure: "
+    yellow " 1. Will use the REALITY client, if not, please leave"
+    yellow " 2. Installed Xray with options 1/2 of the script"
     echo ""
-    read -p "输入任意内容继续，按 ctrl + c 退出" rubbish
+    read -p "Enter anything to continue, press ctrl + c to exit" rubbish
     echo ""
-    yellow " 请输入借用网站/ip，默认 dl.google.com: "
+    yellow " Please enter the borrowed website/ip, default  dl.google.com : "
     read -p "" forwardSite
     [ -z "$forwardSite" ] && forwardSite="dl.google.com"
-    yellow " 当前借用网站: $forwardSite"
+    yellow " Current borrowed website: $forwardSite"
     echo ""
-    yellow " 请输入借用网站的 sni(默认与借用网站相同): "
+    yellow " Please enter the sni of the borrowed website (default same as borrowed website): "
     read -p "" forwardSiteSNI
     [ -z "$forwardSiteSNI" ] && forwardSiteSNI=$forwardSite
-    yellow "当前借用网站的 sni: $forwardSiteSNI"
+    yellow "Current SNI of borrowed website: $forwardSiteSNI"
     echo ""
-    yellow " 请输入目标网站端口(默认 443): "
+    yellow " Please enter the target website port (default 443): "
     read -p "" forwardPort
     [ -z "$forwardPort" ] && forwardPort=443
-    yellow " 当前目标端口: $port"
+    yellow " Current target port: $port"
     echo ""
-    red " 开始测试: "
-# 目前没有找到能读取 curl 结果并判断是否成功的方法，只能由用户自行判断
+    red " Start the test: "
+# At present, there is no way to read the curl result and determine whether it is successful, and the user can only judge it by himself
     curl --http2 --tlsv1.3 https://${forwardSite}:${forwardPort}
-    yellow " 请确保没有错误，然后按 y 继续"
+    yellow " Please make sure there is no error, then press y to continue "
     read -p " (Y/n) " rubbish
     if [ "$rubbish" != "Y" ] || [ "$rubbish" != "y" ]; then
         exit 0
     fi
     echo ""
-    yellow " 请输入 Xray 监听端口(默认 443): "
+    yellow " Please enter the Xray listening port (default 443): "
     read -p "" port
     [ -z "$port" ] && port=443
-    yellow " 当前 Xray 监听端口: $port"
+    yellow " Current Xray listening port: $port"
     if [ "$port" == "443" ] && [ "$forwardPort" == "443" ]; then
         echo ""
-        green " 当前 80 端口占用: "
+        green " Current 80 port usage: "
         lsof -i:80
         echo ""
-        yellow " 是否转发 80 端口?"
+        yellow " Do you want to forward port 80 ?"
         read -p " (Y/n)" answer
         if [ "$answer" == "n" ] || [ "$answer" == "N" ]; then
             "DokodemoDoorPort"=$(shuf -i10000-65000 -n1)
@@ -1436,51 +1436,51 @@ set_REALITY_steal() {
     fi
     echo ""
     h2Port=$(shuf -i10000-65000 -n1)
-    red " 检测所需端口占用情况: "
+    red " Check the usage of the required ports: "
     lsof -i:$port
     lsof -i:$DokodemoDoorPort
     lsof -i:$h2Port
-    yellow " 如有占用，请使用 kill [pid] 来解除占用！"
-    read -p "是否继续(Y/n)?" answer
+    yellow " If there is occupancy, please use kill [pid] to release it!"
+    read -p "Continue (Y/n)?" answer
     if [ "$answer" == "n" ];then
         exit 0
     fi
     echo ""
     getUUID
     echo ""
-    yellow " 当前 uuid: $uuid"
+    yellow " Current uuid: $uuid"
     echo ""
     tmpKey=$(xray x25519)
     tmpPrivateKey=$(echo "$tmpKey" | grep Private | cut -d " " -f 3)
     tmpPublickKey=$(echo "$tmpKey" |  grep Public | cut -d " " -f 3)
-    yellow " 请输入 REALITY 的公钥和私钥，不填将随机生成的！"
-    read -p " 私钥(服务端): " answer
+    yellow " Please enter Reality's public/private keys, or leave blank to use auto-generated ones!"
+    read -p " Private key (server): " answer
     if [ -z "$answer" ]; then
-        red " 已随机生成密钥对！"
+        red " The key pair has been randomly generated！"
         PrivateKey="$tmpPrivateKey"
         PublicKey="$tmpPublickKey"
     else
         PrivateKey=$answer
-        read -p " 公钥(客户端): " PublicKey
+        read -p " Public key (client): " PublicKey
     fi
     echo ""
-    yellow " 当前私钥: $PrivateKey"
-    yellow " 当前公钥: $PubliccKey"
+    yellow " Current Private key: $PrivateKey"
+    yellow " Current Public key: $PubliccKey"
     echo ""
-    yellow " 流控: "
-    green " 1. xtls-rprx-vision (默认)"
-    yellow "2.  (不使用流控)"
+    yellow " Flow Control: "
+    green " 1. xtls-rprx-vision (default)"
+    yellow "2.  (no flow control)"
     echo ""
-    read -p " 请选择: " answer
+    read -p " Choose one: " answer
     case $answer in
         1) flow="xtls-rprx-vision" ;;
         2) flow="" ;;
-        *) red "已自动选择 xtls-rprx-vision!" && flow="xtls-rprx-vision" ;;
+        *) red "Auto-selected xtls-rprx-vision!" && flow="xtls-rprx-vision" ;;
     esac
-    yellow " 当前流控: $flow"
+    yellow " Current Flow Control: $flow"
     echo ""
     echo ""
-    red " 开始配置 Xray!"
+    red " Configuring Xray!"
     cat >/usr/local/etc/xray/config.json <<-EOF
 {
     "inbounds": [
@@ -1564,59 +1564,59 @@ EOF
     else
         linkIP="$ip"
     fi
-    yellow " 服务器信息: "
+    yellow " Server information: "
     echo ""
-    red " 节点一: "
-    green " 协议: VLESS"
-    green " 服务器地址: $linkIP"
-    green " 端口: $port"
+    red " Node 1: "
+    green " Protocol: VLESS"
+    green " Server Address: $linkIP"
+    green " Port: $port"
     green " uuid: $uuid"
-    green " 流控: $flow"
-    green " 传输方式: tcp"
-    green " 传输层安全: REALITY"
-    green " 浏览器指纹: 任选，推荐 ios"
-    green " serverName / 服务器名称指示 /sni: $forwardSiteSNI"
-    green " publicKey / 公钥: $PublicKey"
-    green " spiderX: 自行访问目标网站，找个靠谱的路径，不懂就填 \"/\" "
-    green " shortId: 不懂不填"
+    green " Flow Control: $flow"
+    green " Transport Method: tcp"
+    green " Transport Layer Security: REALITY"
+    green " Browser Fingerprint: Any (iOS recommended)"
+    green " serverName / Server Name Indication /sni: $forwardSiteSNI"
+    green " publicKey / Public Key: $PublicKey"
+    green " spiderX: Please access the target website yourself and find a reliable path，If you do not understand, fill in \"/\" "
+    green " shortId: Leave blank if you do not understand"
     echo ""
-    green " 分享链接： 暂无标准"
+    green " Sharing Link: No standard yet"
     echo ""
     echo ""
-    red " 节点二:"
-    green " 协议: VLESS"
-    green " 服务器地址: $linkIP"
-    green " 端口: $port"
+    red " Node 2:"
+    green " Protocol: VLESS"
+    green " Server Address: $linkIP"
+    green " Port: $port"
     green " uuid: $uuid"
-    green " 流控: none"
-    green " 传输方式: HTTP/2"
-    green " 路径: /"
-    green " 传输层安全: REALITY"
-    green " 浏览器指纹: 任选，推荐 ios"
-    green " serverName / 服务器名称指示 /sni: $forwardSiteSNI"
-    green " publicKey / 公钥: $PublicKey"
-    green " spiderX: 自行访问目标网站，找个靠谱的路径，不懂就填 \"/\" "
-    green " shortId: 不懂不填"
+    green " Flow Control: none"
+    green " Transport Method: HTTP/2"
+    green " Path: /"
+    green " Transport Layer Security: REALITY"
+    green " Browser Fingerprint: Any (iOS recommended)"
+    green " serverName / Server Name Indication /sni: $forwardSiteSNI"
+    green " publicKey / Public Key: $PublicKey"
+    green " spiderX: Please access the target website yourself and find a reliable path，If you do not understand, fill in \"/\" "
+    green " shortId: Leave blank if you do not understand"
     echo ""
-    green " 分享链接： 暂无标准"
+    green " Sharing Link: No standard yet"
 }
 
 install_build() {
     echo ""
-    yellow "请确保: "
-    yellow "1. 安装了最新版本的 golang(可使用本脚本102选项) 和 git"
-    yellow "2. 自愿承担使用最新版本的风险(包括各种各样的bug、协议不适配等问题)"
+    yellow "Please note: "
+    yellow "1. Make sure latest versions of golang (Option 102 of this script can be used) and git are installed"
+    yellow "2. Use the latest version at your own risk (including various bugs, protocol mismatches, etc.)"
     echo ""
-    read -p "输入任意内容继续，按 ctrl + c 退出" rubbish
+    read -p "Press any key to continue, or ctrl + c to exit" rubbish
     echo ""
-    red "3秒冷静期"
+    red "3 seconds of calm"
     sleep 3
     git clone https://github.com/XTLS/Xray-core.git
-    yellow "即将开始编译，可能耗时较久，请耐心等待"
+    yellow "Compilation will begin shortly, which may take a while. Please be patient"
     cd Xray-core && go mod download
     CGO_ENABLED=0 go build -o xray -trimpath -ldflags "-s -w -buildid=" ./main
 	chmod +x xray || {
-		red "Xray安装失败"
+		red "Xray installation failed"
         cd ..
         rm -rf Xray-core
         rm -rf /root/go
@@ -1655,17 +1655,17 @@ install_build() {
     systemctl enable xray.service
 
     echo ""
-    yellow "装完了(确信)"
+    yellow "Installation complete(sure)"
 }
 
 install_official() {
     update_system
     echo ""
-    read -p "是否手动指定 Xray 版本?不指定将安装最新稳定版(y/N): " ownVersion
+    read -p "Would you like to manually specify the Xray version? If N, the latest stable version will be installed(y/N): " ownVersion
     if [[ "$ownVersion" == "y" ]]; then
-        # 也许根本不需要读取？毕竟不给版本号，官方脚本也会报错
-        read -p "请输入安装版本(不要以"v"开头): " xrayVersion
-        [[ -z "xrayVersion" ]] && red "请输入有效版本号！" && exit 1
+        # Perhaps it is not necessary to read? After all, if the version number is not given, the official script will also report an error
+        read -p "Please enter the version you wish to install (do not include the "v" prefix): " xrayVersion
+        [[ -z "xrayVersion" ]] && red "Please enter a valid version number!" && exit 1
         bash -c "$(curl -L -k https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --version ${xrayVersion} -u root
     else
         bash -c "$(curl -L -k https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u root
@@ -1699,25 +1699,25 @@ install_go() {
         cpu=s390x
     else 
         cpu=$bit
-        red "可能不支持该型号( $cpu )的CPU!"
+        red "CPU model ($cpu) may not be supported!"
     fi
     go_version=$(curl https://go.dev/VERSION?m=text)
     red "当前最新版本golang: $go_version"
     curl -O -k -L https://go.dev/dl/${go_version}.linux-${cpu}.tar.gz
-    yellow "正在解压......"
+    yellow "Extracting......"
     tar -xf go*.linux-${cpu}.tar.gz -C /usr/local/
     sleep 3
     export PATH=\$PATH:/usr/local/go/bin
     rm go*.tar.gz
     echo 'export PATH=\$PATH:/usr/local/go/bin' >> /root/.bash_profile
     source /root/.bash_profile
-    yellow "检查当前golang版本: "
+    yellow "Check current golang version: "
     go version
-    yellow "为确保正常安装，请手动输入: "
+    yellow "To ensure successful installation，Please enter manually: "
     echo "echo 'export PATH=\$PATH:/usr/local/go/bin' >> /root/.bash_profile"
     red "source /root/.bash_profile"
     echo ""
-    echo "如果错误，常见错误原因: 未删除旧的go"
+    echo "If there is an error, it may be due to not deleting the old version of go"
 }
 
 unintstall_xray() {
@@ -1731,14 +1731,14 @@ updateGEO() {
 getUUID() {
     echo ""
     uuid_regex='^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$'
-    yellow "请输入你的 uuid，如果输入内容不合法将自动映射为一个uuid"
+    yellow "Please enter your UUID, if the input is invalid, it will be automatically mapped to a UUID"
     read -p " " answer
     if [ -z "$answer" ]; then
         uuid=$(uuidgen)
     elif [ "$answer" == "${uuid_regex}" ]; then
         uuid="${answer}"
     else
-        red "uuid 不合法！已自动映射！"
+        red "Invalid UUID !  Automatically mapped!"
         uuid=$(xray uuid -i "$answer")
     fi
 }
@@ -1749,43 +1749,43 @@ myHelp() {
     echo ""
     yellow "选项:"
     echo ""
-    yellow "help         查看本帮助"
-    yellow "install      使用官方脚本 安装/更新 xray"
-    yellow "build        编译安装 xray"
-    yellow "cert         获取 tls 证书"
+    yellow "help         View this help"
+    yellow "install      Install/update Xray using official script"
+    yellow "build        Compile and install Xray"
+    yellow "cert         Get TLS certificate"
 }
 
 menu() {
     clear
-    red " Xray一键安装/配置脚本"
+    red " Xray one-click installation/configuration script"
     echo ""
-    yellow " 1. 通过官方脚本 安装/更新 Xray"
-    yellow " 2. 编译安装 Xray"
-    echo ""
-    echo " ------------------------------------"
-    echo ""
-    yellow " 3. 配置 Xray: 无TLS的协议"
-    green " 4. 配置 Xray: VLESS + xtls + web (推荐)"
-    green " 5. 配置 Xray: 用 REALITY \"借用\" 别人的证书: VLESS + tcp + xtls / VLESS + h2 + tls 共存！"
-    echo ""
-    echo " ------------------------------------"
-    echo " 11. 启动 Xray"
-    echo " 12. 停止 Xray"
-    echo " 13. 设置 Xray 开机自启动"
-    echo " 14. 取消 Xray 开机自启动"
-    echo " 15. 查看 Xray 运行状态"
-    red " 16. 卸载 Xray"
-    echo " 17. 更新 geo 资源文件"
-    echo " ------------------------------------"
-    echo ""
-    yellow " 100. 更新系统和安装依赖"
-    yellow " 101. 申请TLS证书(http申请/自签)"
-    yellow " 102. 安装最新版本的golang 及 编译 Xray 的其他组件"
+    yellow " 1. Install/update Xray using the official script"
+    yellow " 2. Compile and install Xray"
     echo ""
     echo " ------------------------------------"
     echo ""
-    yellow " 0. 退出脚本"
-    read -p "清选择: " answer
+    yellow " 3. Configure Xray: Protocol without TLS"
+    green " 4. Configure Xray: VLESS + xtls + web (recommended)"
+    green " 5. Configure Xray: Use REALITY's borrowed certificate: VLESS + tcp + xtls / VLESS + h2 + tls coexists!"
+    echo ""
+    echo " ------------------------------------"
+    echo " 11. Start Xray"
+    echo " 12. Stop Xray"
+    echo " 13. Set Xray to start automatically on boot"
+    echo " 14. Disable Xray from starting automatically on boot"
+    echo " 15. View Xray's running status"
+    red " 16. Uninstall Xray"
+    echo " 17. Update geo resource files"
+    echo " ------------------------------------"
+    echo ""
+    yellow " 100. Update the system and install dependencies"
+    yellow " 101. Apply for a TLS certificate (HTTP application/self-signed)"
+    yellow " 102. Install the latest version of Golang and compile other components of Xray"
+    echo ""
+    echo " ------------------------------------"
+    echo ""
+    yellow " 0. Exit the script"
+    read -p "Please select: " answer
     case $answer in
         0) exit 0 ;;
         1) install_official ;;
@@ -1803,7 +1803,7 @@ menu() {
         100) update_system ;;
         101) get_cert ;;
         102) install_go ;;
-        *) red "不存在本选项！" && exit 1 ;;
+        *) red "This option does not exist!" && exit 1 ;;
     esac
 }
 
@@ -1815,5 +1815,5 @@ case "$action" in
     install) install_official ;;
     build) install_build ;;
     cert) get_cert ;;
-    *) red "不存在的选项！" && myHelp ;;
+    *) red "Non-existent option!" && myHelp ;;
 esac
