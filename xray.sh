@@ -1010,11 +1010,11 @@ set_shadowsocks_withoutTLS() {
 EOF
     echo ""
     ip=$(curl ip.sb)
-    yellow "协议: shadowsocks"
+    yellow "Protocol: shadowsocks"
     yellow "ip: $ip"
-    yellow "端口: $port"
-    yellow "加密方式: $method"
-    yellow "密码: $password"
+    yellow "Port: $port"
+    yellow "Encryption method: $method"
+    yellow "Password: $password"
     echo ""
     raw="${method}:${password}@${ip}:${port}"
     if [[ "$ss2022" != "true" ]]; then
@@ -1022,7 +1022,7 @@ EOF
     else
         link="$raw"
     fi
-    green "分享链接: "
+    green "Sharing link: "
     green "ss://$link"
 
     systemctl stop xray
@@ -1702,7 +1702,7 @@ install_go() {
         red "CPU model ($cpu) may not be supported!"
     fi
     go_version=$(curl https://go.dev/VERSION?m=text)
-    red "当前最新版本golang: $go_version"
+    red "The latest version of golang: $go_version"
     curl -O -k -L https://go.dev/dl/${go_version}.linux-${cpu}.tar.gz
     yellow "Extracting......"
     tar -xf go*.linux-${cpu}.tar.gz -C /usr/local/
@@ -1745,9 +1745,9 @@ getUUID() {
 
 myHelp() {
     echo ""
-    yellow "bash ${PWD}/${0} [选项]"
+    yellow "bash ${PWD}/${0} [options]"
     echo ""
-    yellow "选项:"
+    yellow "options:"
     echo ""
     yellow "help         View this help"
     yellow "install      Install/update Xray using official script"
