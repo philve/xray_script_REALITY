@@ -1,7 +1,7 @@
 # Usage
 
 ```shell
-wget https://raw.githubusercontent.com/tdjnodj/xray_script/main/xray.sh && bash xray.sh
+wget https://raw.githubusercontent.com/philve/xray_script_REALITY/main/xray.sh && bash xray.sh
 ```
 
 # Old Version
