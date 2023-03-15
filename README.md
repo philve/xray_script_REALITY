@@ -1,32 +1,34 @@
-# 使用
+# Usage
 
 ```shell
 wget https://raw.githubusercontent.com/tdjnodj/xray_script/main/xray.sh && bash xray.sh
 ```
 
-# 旧版
+# Old Version
 
 https://github.com/tdjnodj/xray_script/tree/old
 
-# 特色
+# Features
 
-- 模块化安装，方便管理。BBR、证书申请等专业活请使用专业脚本。
+- Modular install for easy management. 
+  Professional activities such as BBR optimization and certificate application are recommended to be performed using professional scripts.
 
-- 随机握手超时时间，抵御主动探测( VMess + ws / VMess + tcp + http / shadowsocks / VLESS + tcp + xtls)
+- Random handshake timeout to resist active detection
+  ( VMess + ws / VMess + tcp + http / shadowsocks / VLESS + tcp + xtls)
 
 # TODO
 
-- [x] xtls + fallback(ws)
+- [x] xtls + fallback (ws)
 
-- [x] 随机`Policy`，以缓解 https://github.com/XTLS/Xray-core/issues/1511 中的主动探测。
+- [x] Random "Policy" to alleviate active detection in https://github.com/XTLS/Xray-core/issues/1511 .
 
 - [ ] VLESS/VMess/Trojan + gRPC + TLS
 
 - [ ] REALITY 支持
 
-# 答疑
+# FAQ
 
-见 [wiki](https://github.com/tdjnodj/xray_script/wiki)
+See [wiki](https://github.com/tdjnodj/xray_script/wiki)
 
 # Thanks
 
